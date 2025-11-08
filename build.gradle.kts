@@ -1,19 +1,25 @@
-plugins {
-    // Kotlin
-    kotlin("multiplatform").version("1.9.22").apply(false)
-    kotlin("android").version("1.9.22").apply(false)
-    kotlin("jvm").version("1.9.22").apply(false)
-    kotlin("plugin.serialization").version("1.9.22").apply(false)
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    }
 
-    // Android
-    id("com.android.application").version("8.2.2").apply(false)
-    id("com.android.library").version("8.2.2").apply(false)
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22")
+        classpath("com.android.tools.build:gradle:8.2.2")
+        classpath("org.jetbrains.compose:compose-gradle-plugin:1.5.11")
+        classpath("app.cash.sqldelight:gradle-plugin:2.0.1")
+    }
+}
 
-    // Compose
-    id("org.jetbrains.compose").version("1.5.11").apply(false)
-
-    // SQLDelight
-    id("app.cash.sqldelight").version("2.0.1").apply(false)
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    }
 }
 
 tasks.register("clean", Delete::class) {
