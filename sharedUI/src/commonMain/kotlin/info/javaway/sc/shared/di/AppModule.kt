@@ -1,6 +1,5 @@
 package info.javaway.sc.shared.di
 
-import com.russhwolf.settings.Settings
 import info.javaway.sc.shared.data.api.ApiClient
 import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.data.repository.AuthRepositoryImpl
@@ -12,6 +11,8 @@ import info.javaway.sc.shared.domain.repository.CategoryRepository
 import info.javaway.sc.shared.domain.repository.ProductRepository
 import info.javaway.sc.shared.domain.repository.ServiceRepository
 import info.javaway.sc.shared.presentation.screens.auth.LoginViewModel
+import info.javaway.sc.shared.presentation.screens.auth.RegisterViewModel
+import info.javaway.sc.shared.presentation.screens.home.HomeViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
@@ -22,8 +23,8 @@ import org.koin.dsl.module
  */
 
 val dataModule = module {
-    // Settings для хранения данных
-    single { Settings() }
+    // Settings для хранения данных (platform-specific)
+    single { createSettings() }
 
     // TokenManager для работы с JWT токеном
     single { TokenManager(get()) }
@@ -46,6 +47,8 @@ val repositoryModule = module {
 
 val viewModelModule = module {
     factoryOf(::LoginViewModel)
+    factoryOf(::RegisterViewModel)
+    factoryOf(::HomeViewModel)
 }
 
 // Объединенный список всех модулей
