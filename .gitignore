@@ -1,0 +1,123 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.gradletasknamecache
+
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+local.properties
+
+# IntelliJ IDEA / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.idea_modules/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Kotlin
+*.class
+*.log
+*.ctxt
+.mtj.tmp/
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Kotlin Multiplatform
+.kotlin/
+
+# Compose
+compose-desktop.properties
+
+# Backend specific
+backend/logs/
+backend/*.log
+backend/data/
+*.db
+*.sqlite
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database
+*.sql
+*.dump
+
+# Secrets
+secrets/
+*.pem
+*.key
+*.p12
+*.jks
+keystore.properties
+
+# Test results
+test-results/
+*.hprof
+
+# Captures
+captures/
+
+# Native
+*.so
+*.dylib
+*.dll
+
+# Xcode (iOS)
+xcuserdata/
+*.xcworkspace
+!default.xcworkspace
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+# CocoaPods
+Pods/
+*.podspec
+Podfile.lock
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Package Files
+node_modules/
