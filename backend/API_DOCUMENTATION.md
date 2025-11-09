@@ -303,6 +303,325 @@ Authorization: Bearer {token}
 
 ---
 
+### 🛍 Товары
+
+#### 11. Получить список товаров
+
+**GET** `/api/products`
+
+**Query Parameters:**
+- `categoryId` (optional): Long - фильтр по категории
+- `status` (optional): String - фильтр по статусу (ACTIVE, SOLD, ARCHIVED)
+- `condition` (optional): String - фильтр по состоянию (NEW, USED)
+- `minPrice` (optional): Double - минимальная цена
+- `maxPrice` (optional): Double - максимальная цена
+- `search` (optional): String - поиск по названию и описанию
+- `page` (optional): Int - номер страницы (по умолчанию 1)
+- `pageSize` (optional): Int - размер страницы (по умолчанию 20, максимум 100)
+
+**Response (200 OK):**
+```json
+{
+  "products": [
+    {
+      "id": 1,
+      "userId": 1,
+      "title": "Диван угловой",
+      "description": "Продаю диван в отличном состоянии",
+      "price": 15000.0,
+      "categoryId": 1,
+      "condition": "USED",
+      "images": ["http://example.com/image1.jpg"],
+      "status": "ACTIVE",
+      "views": 42,
+      "createdAt": "2025-11-09T12:00:00",
+      "updatedAt": "2025-11-09T12:00:00"
+    }
+  ],
+  "total": 50,
+  "page": 1,
+  "pageSize": 20,
+  "totalPages": 3
+}
+```
+
+#### 12. Получить детали товара
+
+**GET** `/api/products/{id}`
+
+**Response (200 OK):**
+```json
+{
+  "product": {
+    "id": 1,
+    "userId": 1,
+    "title": "Диван угловой",
+    "description": "Продаю диван в отличном состоянии",
+    "price": 15000.0,
+    "categoryId": 1,
+    "condition": "USED",
+    "images": ["http://example.com/image1.jpg"],
+    "status": "ACTIVE",
+    "views": 43,
+    "createdAt": "2025-11-09T12:00:00",
+    "updatedAt": "2025-11-09T12:00:00"
+  },
+  "user": {
+    "id": 1,
+    "name": "Иван Иванов",
+    "avatar": null,
+    "rating": 4.5,
+    "isVerified": false
+  },
+  "category": {
+    "id": 1,
+    "name": "Мебель",
+    "icon": "🪑"
+  },
+  "isFavorite": false
+}
+```
+
+**Error Response (404 Not Found):**
+```json
+{
+  "error": "PRODUCT_NOT_FOUND",
+  "message": "Товар не найден"
+}
+```
+
+#### 13. Создать товар
+
+**POST** `/api/products`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+{
+  "title": "Диван угловой",
+  "description": "Продаю диван в отличном состоянии. Размеры: 250x180 см",
+  "price": 15000.0,
+  "categoryId": 1,
+  "condition": "USED",
+  "images": ["http://example.com/image1.jpg", "http://example.com/image2.jpg"]
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "id": 1,
+  "userId": 1,
+  "title": "Диван угловой",
+  "description": "Продаю диван в отличном состоянии. Размеры: 250x180 см",
+  "price": 15000.0,
+  "categoryId": 1,
+  "condition": "USED",
+  "images": ["http://example.com/image1.jpg", "http://example.com/image2.jpg"],
+  "status": "ACTIVE",
+  "views": 0,
+  "createdAt": "2025-11-09T12:00:00",
+  "updatedAt": "2025-11-09T12:00:00"
+}
+```
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "error": "INVALID_TITLE",
+  "message": "Название не может быть пустым"
+}
+```
+
+#### 14. Обновить товар
+
+**PUT** `/api/products/{id}`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+{
+  "title": "Диван угловой (новое название)",
+  "price": 14000.0,
+  "status": "ACTIVE"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "id": 1,
+  "userId": 1,
+  "title": "Диван угловой (новое название)",
+  "description": "Продаю диван в отличном состоянии. Размеры: 250x180 см",
+  "price": 14000.0,
+  "categoryId": 1,
+  "condition": "USED",
+  "images": ["http://example.com/image1.jpg", "http://example.com/image2.jpg"],
+  "status": "ACTIVE",
+  "views": 43,
+  "createdAt": "2025-11-09T12:00:00",
+  "updatedAt": "2025-11-09T13:30:00"
+}
+```
+
+**Error Response (403 Forbidden):**
+```json
+{
+  "error": "FORBIDDEN",
+  "message": "Нет прав для редактирования этого товара"
+}
+```
+
+#### 15. Удалить товар
+
+**DELETE** `/api/products/{id}`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Товар успешно удален"
+}
+```
+
+**Error Response (403 Forbidden):**
+```json
+{
+  "error": "FORBIDDEN",
+  "message": "Нет прав для удаления этого товара"
+}
+```
+
+#### 16. Получить свои товары
+
+**GET** `/api/products/my`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Query Parameters:**
+- `page` (optional): Int - номер страницы (по умолчанию 1)
+- `pageSize` (optional): Int - размер страницы (по умолчанию 20, максимум 100)
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "title": "Диван угловой",
+    "description": "Продаю диван в отличном состоянии",
+    "price": 15000.0,
+    "categoryId": 1,
+    "condition": "USED",
+    "images": ["http://example.com/image1.jpg"],
+    "status": "ACTIVE",
+    "views": 42,
+    "createdAt": "2025-11-09T12:00:00",
+    "updatedAt": "2025-11-09T12:00:00"
+  }
+]
+```
+
+#### 17. Добавить товар в избранное
+
+**POST** `/api/products/{id}/favorite`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Товар добавлен в избранное"
+}
+```
+
+**Error Response (409 Conflict):**
+```json
+{
+  "error": "ALREADY_IN_FAVORITES",
+  "message": "Товар уже в избранном"
+}
+```
+
+#### 18. Удалить товар из избранного
+
+**DELETE** `/api/products/{id}/favorite`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Товар удален из избранного"
+}
+```
+
+#### 19. Получить список избранных товаров
+
+**GET** `/api/products/favorites`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Query Parameters:**
+- `page` (optional): Int - номер страницы (по умолчанию 1)
+- `pageSize` (optional): Int - размер страницы (по умолчанию 20, максимум 100)
+
+**Response (200 OK):**
+```json
+{
+  "products": [
+    {
+      "id": 2,
+      "userId": 3,
+      "title": "iPhone 13 Pro",
+      "description": "Состояние идеальное, полный комплект",
+      "price": 65000.0,
+      "categoryId": 2,
+      "condition": "USED",
+      "images": ["http://example.com/iphone.jpg"],
+      "status": "ACTIVE",
+      "views": 120,
+      "createdAt": "2025-11-08T10:00:00",
+      "updatedAt": "2025-11-08T10:00:00"
+    }
+  ],
+  "total": 5,
+  "page": 1,
+  "pageSize": 20,
+  "totalPages": 1
+}
+```
+
+---
+
 ## 🧪 Примеры использования (cURL)
 
 ### Регистрация
@@ -359,6 +678,72 @@ curl -X GET http://localhost:8080/api/categories/products
 curl -X GET http://localhost:8080/api/categories/services
 ```
 
+### Получить список товаров
+```bash
+curl -X GET "http://localhost:8080/api/products?page=1&pageSize=20&categoryId=1"
+```
+
+### Получить детали товара
+```bash
+curl -X GET http://localhost:8080/api/products/1
+```
+
+### Создать товар
+```bash
+curl -X POST http://localhost:8080/api/products \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Диван угловой",
+    "description": "Продаю диван в отличном состоянии",
+    "price": 15000.0,
+    "categoryId": 1,
+    "condition": "USED",
+    "images": ["http://example.com/image1.jpg"]
+  }'
+```
+
+### Обновить товар
+```bash
+curl -X PUT http://localhost:8080/api/products/1 \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Диван угловой (обновлено)",
+    "price": 14000.0
+  }'
+```
+
+### Удалить товар
+```bash
+curl -X DELETE http://localhost:8080/api/products/1 \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+### Получить свои товары
+```bash
+curl -X GET http://localhost:8080/api/products/my \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+### Добавить товар в избранное
+```bash
+curl -X POST http://localhost:8080/api/products/1/favorite \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+### Удалить товар из избранного
+```bash
+curl -X DELETE http://localhost:8080/api/products/1/favorite \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+### Получить избранные товары
+```bash
+curl -X GET http://localhost:8080/api/products/favorites \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
 ---
 
 ## 📝 Валидация
@@ -383,6 +768,34 @@ curl -X GET http://localhost:8080/api/categories/services
 ### Биография
 - Максимум 500 символов
 - Опциональное поле
+
+### Товары
+
+#### Название товара
+- Минимум 1 символ
+- Максимум 200 символов
+- Обязательное поле
+
+#### Описание товара
+- Минимум 1 символ
+- Обязательное поле
+
+#### Цена
+- Не может быть отрицательной
+- Обязательное поле
+
+#### Изображения
+- Минимум 1 изображение
+- Максимум 5 изображений
+- Обязательное поле
+
+#### Состояние (condition)
+- Допустимые значения: `NEW`, `USED`
+- Обязательное поле
+
+#### Статус (status)
+- Допустимые значения: `ACTIVE`, `SOLD`, `ARCHIVED`
+- По умолчанию: `ACTIVE`
 
 ---
 
@@ -409,10 +822,13 @@ Authorization: Bearer YOUR_TOKEN_HERE
 
 | Код | Описание |
 |-----|----------|
+| 200 | OK - Успешный запрос |
+| 201 | Created - Ресурс успешно создан |
 | 400 | Bad Request - Неверный запрос |
 | 401 | Unauthorized - Требуется аутентификация |
 | 403 | Forbidden - Недостаточно прав |
 | 404 | Not Found - Ресурс не найден |
+| 409 | Conflict - Конфликт данных |
 | 500 | Internal Server Error - Внутренняя ошибка сервера |
 
 ---
