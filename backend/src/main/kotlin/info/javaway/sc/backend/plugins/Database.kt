@@ -1,6 +1,7 @@
 package info.javaway.sc.backend.plugins
 
 import info.javaway.sc.backend.data.tables.*
+import info.javaway.sc.backend.repository.CategoryRepository
 import io.ktor.server.application.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -30,4 +31,9 @@ fun Application.configureDatabase() {
         environment.log.info("Database configured: $jdbcURL")
         environment.log.info("Tables created successfully")
     }
+
+    // Populate default categories if needed
+    val categoryRepository = CategoryRepository()
+    categoryRepository.populateDefaultCategories()
+    environment.log.info("Default categories populated")
 }
