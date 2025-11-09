@@ -3,6 +3,7 @@ package info.javaway.sc.backend.plugins
 import info.javaway.sc.backend.routes.authRoutes
 import info.javaway.sc.backend.routes.categoryRoutes
 import info.javaway.sc.backend.routes.productRoutes
+import info.javaway.sc.backend.routes.serviceRoutes
 import info.javaway.sc.backend.routes.userRoutes
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -32,7 +33,8 @@ fun Application.configureRouting() {
             // Товары (CRUD, избранное, поиск)
             productRoutes()
 
-            // TODO: Add service routes
+            // Услуги (CRUD, поиск)
+            serviceRoutes()
         }
     }
 }

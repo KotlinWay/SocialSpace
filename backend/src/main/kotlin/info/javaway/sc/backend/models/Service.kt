@@ -38,5 +38,22 @@ data class UpdateServiceRequest(
     val description: String? = null,
     val categoryId: Long? = null,
     val price: String? = null,
-    val status: ServiceStatus? = null
+    val status: ServiceStatus? = null,
+    val images: List<String>? = null
+)
+
+@Serializable
+data class ServiceResponse(
+    val service: Service,
+    val user: UserPublicInfo,
+    val category: CategoryInfo
+)
+
+@Serializable
+data class ServiceListResponse(
+    val services: List<Service>,
+    val total: Long,
+    val page: Int,
+    val pageSize: Int,
+    val totalPages: Int
 )
