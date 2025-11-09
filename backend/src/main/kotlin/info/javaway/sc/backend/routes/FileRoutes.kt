@@ -36,7 +36,7 @@ fun Route.fileRoutes(
      * - 400 Bad Request: ошибка валидации
      * - 401 Unauthorized: не авторизован
      */
-    authenticate {
+    authenticate("auth-jwt") {
         post("/upload") {
             try {
                 // Проверяем JWT токен
@@ -158,7 +158,7 @@ fun Route.fileRoutes(
      * - 403 Forbidden: нет прав для обновления этого профиля
      * - 404 Not Found: пользователь не найден
      */
-    authenticate {
+    authenticate("auth-jwt") {
         post("/users/{id}/avatar") {
             try {
                 // Проверяем JWT токен
