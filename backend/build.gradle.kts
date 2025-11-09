@@ -35,6 +35,7 @@ dependencies {
 
     // Database
     implementation(libs.postgresql)
+    implementation(libs.h2) // H2 для локальной разработки
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)

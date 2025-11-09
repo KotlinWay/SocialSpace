@@ -1,5 +1,7 @@
 package info.javaway.sc.backend.plugins
 
+import info.javaway.sc.backend.routes.authRoutes
+import info.javaway.sc.backend.routes.userRoutes
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -14,10 +16,14 @@ fun Application.configureRouting() {
             call.respondText("OK")
         }
 
-        // API Routes will be added here
+        // API Routes
         route("/api") {
-            // TODO: Add auth routes
-            // TODO: Add user routes
+            // Аутентификация (регистрация, вход, получение текущего пользователя)
+            authRoutes()
+
+            // Пользователи (профили, обновление, удаление)
+            userRoutes()
+
             // TODO: Add product routes
             // TODO: Add service routes
             // TODO: Add category routes
