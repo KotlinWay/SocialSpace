@@ -1,6 +1,7 @@
 package info.javaway.sc.backend.plugins
 
 import info.javaway.sc.backend.routes.authRoutes
+import info.javaway.sc.backend.routes.categoryRoutes
 import info.javaway.sc.backend.routes.userRoutes
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -24,9 +25,11 @@ fun Application.configureRouting() {
             // Пользователи (профили, обновление, удаление)
             userRoutes()
 
+            // Категории (товары и услуги)
+            categoryRoutes()
+
             // TODO: Add product routes
             // TODO: Add service routes
-            // TODO: Add category routes
         }
     }
 }
