@@ -39,15 +39,11 @@ class ApiClient(
             url(baseUrl)
             contentType(ContentType.Application.Json)
         }
-
-        // HttpSend plugin для добавления токена при каждом запросе
-        install(HttpSend) {
-            intercept { request ->
-                // Добавляем токен перед каждым запросом
-                tokenProvider()?.let { token ->
-                    request.headers.append(HttpHeaders.Authorization, "Bearer $token")
-                }
-                execute(request)
+    }.apply {
+        // Добавляем токен при каждом запросе через pipeline interceptor
+        requestPipeline.intercept(HttpRequestPipeline.State) {
+            tokenProvider()?.let { token ->
+                context.headers.append(HttpHeaders.Authorization, "Bearer $token")
             }
         }
     }
