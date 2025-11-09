@@ -9,6 +9,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import kotlin.time.ExperimentalTime
 
 /**
  * Repository для работы с пользователями в базе данных
@@ -18,6 +19,7 @@ class UserRepository {
     /**
      * Создать нового пользователя
      */
+    @OptIn(ExperimentalTime::class)
     fun createUser(
         phone: String,
         email: String?,
@@ -25,7 +27,7 @@ class UserRepository {
         passwordHash: String,
         role: UserRole = UserRole.USER
     ): User? = transaction {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val now = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val insertStatement = Users.insert {
             it[Users.phone] = phone
@@ -162,7 +164,8 @@ class UserRepository {
      */
     fun getAllUsers(limit: Int = 100, offset: Long = 0): List<User> = transaction {
         Users.selectAll()
-            .limit(limit, offset)
+            .limit(limit)
+            .offset(offset)
             .orderBy(Users.createdAt to SortOrder.DESC)
             .map { rowToUser(it) }
     }
