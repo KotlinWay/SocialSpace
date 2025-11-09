@@ -1,6 +1,5 @@
 package info.javaway.sc.shared.di
 
-import com.russhwolf.settings.Settings
 import info.javaway.sc.shared.data.api.ApiClient
 import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.data.repository.AuthRepositoryImpl
@@ -24,8 +23,8 @@ import org.koin.dsl.module
  */
 
 val dataModule = module {
-    // Settings для хранения данных
-    single { Settings() }
+    // Settings для хранения данных (platform-specific)
+    single { createSettings() }
 
     // TokenManager для работы с JWT токеном
     single { TokenManager(get()) }
