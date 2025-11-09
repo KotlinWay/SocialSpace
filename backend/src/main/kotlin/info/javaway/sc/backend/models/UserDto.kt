@@ -75,3 +75,14 @@ fun User.toPublicProfile(): PublicUserProfile {
         createdAt = createdAt
     )
 }
+
+/**
+ * DTO для ответа после загрузки файла
+ */
+@Serializable
+data class FileUploadResponse(
+    val success: Boolean,
+    val url: String? = null,
+    val fileName: String? = null,
+    val message: String? = null
+)
