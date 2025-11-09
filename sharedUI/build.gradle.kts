@@ -56,8 +56,8 @@ kotlin {
             api(libs.decompose.compose)
 
             // DI - Koin
-            implementation(libs.koin.core)
-            implementation(libs.koin.compose)
+            api(libs.koin.core)
+            api(libs.koin.compose)
 
             // Image loading - Coil
             implementation(libs.coil)
@@ -67,7 +67,7 @@ kotlin {
             implementation(libs.kotlinx.datetime)
 
             // Logging
-            implementation(libs.napier)
+            api(libs.napier)
 
             // Settings
             implementation(libs.multiplatformSettings)

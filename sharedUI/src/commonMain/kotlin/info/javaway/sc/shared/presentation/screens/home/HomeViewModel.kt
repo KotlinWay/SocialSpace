@@ -7,6 +7,7 @@ import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.domain.models.Result
 import info.javaway.sc.shared.domain.models.User
 import info.javaway.sc.shared.domain.repository.AuthRepository
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,6 +40,7 @@ class HomeViewModel(
                     )
                 }
                 is Result.Error -> {
+                    Napier.e { result.message }
                     state = state.copy(
                         isLoading = false,
                         error = result.message

@@ -9,6 +9,8 @@ import info.javaway.sc.shared.App
 import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.di.appModules
 import info.javaway.sc.shared.navigation.RootComponent
+import io.github.aakira.napier.DebugAntilog
+import io.github.aakira.napier.Napier
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.android.ext.android.inject
@@ -35,7 +37,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        Napier.base(DebugAntilog())
         // Создаем ComponentContext для Decompose
         val componentContext = defaultComponentContext()
 
