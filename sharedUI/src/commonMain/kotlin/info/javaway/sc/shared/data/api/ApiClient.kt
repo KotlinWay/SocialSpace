@@ -38,12 +38,16 @@ class ApiClient(
         install(DefaultRequest) {
             url(baseUrl)
             contentType(ContentType.Application.Json)
+        }
 
-            // Добавление JWT токена в заголовки
-            headers {
+        // HttpSend plugin для добавления токена при каждом запросе
+        install(HttpSend) {
+            intercept { request ->
+                // Добавляем токен перед каждым запросом
                 tokenProvider()?.let { token ->
-                    append(HttpHeaders.Authorization, "Bearer $token")
+                    request.headers.append(HttpHeaders.Authorization, "Bearer $token")
                 }
+                execute(request)
             }
         }
     }
