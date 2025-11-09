@@ -1037,6 +1037,128 @@ curl -X GET http://localhost:8080/api/services/my \
 
 ---
 
+## 📁 Загрузка файлов
+
+### 1. Загрузка изображения
+
+**POST** `/api/upload?type={type}`
+
+Универсальный endpoint для загрузки изображений (аватары, фото товаров, фото услуг)
+
+**Headers:**
+```
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+```
+
+**Query параметры:**
+- `type` (обязательный) - тип файла: `avatar`, `product`, `service`
+
+**Request (multipart/form-data):**
+- `file` - файл изображения (JPG, PNG, WEBP, максимум 5 MB)
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "url": "/uploads/products/550e8400-e29b-41d4-a716-446655440000.jpg",
+  "fileName": "550e8400-e29b-41d4-a716-446655440000.jpg",
+  "message": "Файл успешно загружен"
+}
+```
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "error": "VALIDATION_ERROR",
+  "message": "Размер файла (6.50 MB) превышает максимально допустимый (5 MB)"
+}
+```
+
+**Примеры использования:**
+
+```bash
+# Загрузка изображения товара
+curl -X POST "http://localhost:8080/api/upload?type=product" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -F "file=@/path/to/image.jpg"
+
+# Загрузка изображения услуги
+curl -X POST "http://localhost:8080/api/upload?type=service" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -F "file=@/path/to/image.png"
+
+# Загрузка аватара
+curl -X POST "http://localhost:8080/api/upload?type=avatar" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -F "file=@/path/to/avatar.jpg"
+```
+
+### 2. Загрузка аватара пользователя
+
+**POST** `/api/users/{id}/avatar`
+
+Специальный endpoint для загрузки и обновления аватара пользователя. Автоматически обновляет поле `avatar` в профиле пользователя.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+```
+
+**Path параметры:**
+- `id` - ID пользователя (можно обновить только свой аватар)
+
+**Request (multipart/form-data):**
+- `file` - файл изображения аватара (JPG, PNG, WEBP, максимум 5 MB)
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "url": "/uploads/avatars/550e8400-e29b-41d4-a716-446655440000.jpg",
+  "fileName": "550e8400-e29b-41d4-a716-446655440000.jpg",
+  "message": "Аватар успешно обновлен"
+}
+```
+
+**Error Response (403 Forbidden):**
+```json
+{
+  "error": "FORBIDDEN",
+  "message": "Вы можете обновить только свой аватар"
+}
+```
+
+**Пример использования:**
+
+```bash
+curl -X POST http://localhost:8080/api/users/1/avatar \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -F "file=@/path/to/avatar.jpg"
+```
+
+### 3. Доступ к загруженным файлам
+
+Все загруженные файлы доступны по URL:
+```
+http://localhost:8080/uploads/{type}/{filename}
+```
+
+**Примеры:**
+- Аватар: `http://localhost:8080/uploads/avatars/550e8400-e29b-41d4-a716-446655440000.jpg`
+- Фото товара: `http://localhost:8080/uploads/products/550e8400-e29b-41d4-a716-446655440000.jpg`
+- Фото услуги: `http://localhost:8080/uploads/services/550e8400-e29b-41d4-a716-446655440000.jpg`
+
+### Требования к изображениям
+
+- **Форматы:** JPG, JPEG, PNG, WEBP
+- **Максимальный размер:** 5 MB
+- **Валидация:** проверка MIME type и расширения файла
+- **Имена файлов:** автоматическая генерация UUID для предотвращения конфликтов
+
+---
+
 ## 📝 Валидация
 
 ### Номер телефона

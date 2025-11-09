@@ -2,6 +2,7 @@ package info.javaway.sc.backend.plugins
 
 import info.javaway.sc.backend.routes.authRoutes
 import info.javaway.sc.backend.routes.categoryRoutes
+import info.javaway.sc.backend.routes.fileRoutes
 import info.javaway.sc.backend.routes.productRoutes
 import info.javaway.sc.backend.routes.serviceRoutes
 import info.javaway.sc.backend.routes.userRoutes
@@ -35,6 +36,9 @@ fun Application.configureRouting() {
 
             // Услуги (CRUD, поиск)
             serviceRoutes()
+
+            // Загрузка файлов (изображения для товаров, услуг, аватары)
+            fileRoutes()
         }
     }
 }
