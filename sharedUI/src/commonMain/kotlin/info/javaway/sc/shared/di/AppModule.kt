@@ -12,6 +12,8 @@ import info.javaway.sc.shared.domain.repository.CategoryRepository
 import info.javaway.sc.shared.domain.repository.ProductRepository
 import info.javaway.sc.shared.domain.repository.ServiceRepository
 import info.javaway.sc.shared.presentation.screens.auth.LoginViewModel
+import info.javaway.sc.shared.presentation.screens.auth.RegisterViewModel
+import info.javaway.sc.shared.presentation.screens.home.HomeViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
@@ -46,6 +48,8 @@ val repositoryModule = module {
 
 val viewModelModule = module {
     factoryOf(::LoginViewModel)
+    factoryOf(::RegisterViewModel)
+    factoryOf(::HomeViewModel)
 }
 
 // Объединенный список всех модулей
