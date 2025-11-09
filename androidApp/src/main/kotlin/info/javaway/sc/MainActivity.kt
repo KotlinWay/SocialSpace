@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.arkivanov.decompose.defaultComponentContext
-import com.russhwolf.settings.Settings
 import info.javaway.sc.shared.App
 import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.navigation.RootComponent

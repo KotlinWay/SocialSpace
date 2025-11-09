@@ -52,7 +52,7 @@ class HomeViewModel(
     }
 
     fun logout() {
-        tokenManager.clearToken()
+        tokenManager.clear()
         state = state.copy(isLoggedOut = true)
     }
 

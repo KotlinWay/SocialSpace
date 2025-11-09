@@ -33,6 +33,7 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
@@ -50,8 +51,9 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
 
             // Navigation - Decompose
-            implementation(libs.decompose)
-            implementation(libs.decompose.compose)
+            api(libs.decompose)
+            api(libs.decompose.ext.compose.kmm)
+            api(libs.decompose.compose)
 
             // DI - Koin
             implementation(libs.koin.core)

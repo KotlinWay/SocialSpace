@@ -15,6 +15,7 @@ import org.koin.compose.koinInject
 /**
  * Экран входа в приложение
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = koinInject(),
