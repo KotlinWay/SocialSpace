@@ -689,8 +689,49 @@ fun Route.productRoutes(
                     val total = productRepository.countFavorites(userId)
                     val totalPages = ceil(total.toDouble() / pageSize).toInt()
 
+                    // Формируем расширенные данные для каждого избранного товара
+                    val favoriteListItems = favorites.mapNotNull { product ->
+                        // Загружаем пользователя
+                        val user = userRepository.findById(product.userId)
+                        if (user == null) {
+                            return@mapNotNull null
+                        }
+
+                        // Загружаем категорию
+                        val category = categoryRepository.findById(product.categoryId)
+                        if (category == null) {
+                            return@mapNotNull null
+                        }
+
+                        ProductListItem(
+                            id = product.id,
+                            title = product.title,
+                            description = product.description,
+                            price = product.price,
+                            condition = product.condition,
+                            images = product.images,
+                            status = product.status,
+                            views = product.views,
+                            createdAt = product.createdAt,
+                            updatedAt = product.updatedAt,
+                            user = UserPublicInfo(
+                                id = user.id,
+                                name = user.name,
+                                avatar = user.avatar,
+                                rating = user.rating,
+                                isVerified = user.isVerified
+                            ),
+                            category = CategoryInfo(
+                                id = category.id,
+                                name = category.name,
+                                icon = category.icon
+                            ),
+                            isFavorite = true  // Все товары в этом списке - избранные
+                        )
+                    }
+
                     val response = ProductListResponse(
-                        products = favorites,
+                        products = favoriteListItems,
                         total = total,
                         page = page,
                         pageSize = pageSize,
