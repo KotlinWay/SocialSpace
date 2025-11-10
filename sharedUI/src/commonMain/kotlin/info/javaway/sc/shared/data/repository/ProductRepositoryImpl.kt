@@ -20,7 +20,7 @@ class ProductRepositoryImpl(
         search: String?,
         page: Int,
         pageSize: Int
-    ): kotlin.Result<ProductListResponse> {
+    ): Result<ProductListResponse> {
         return apiClient.getProducts(
             categoryId = categoryId,
             status = status,
