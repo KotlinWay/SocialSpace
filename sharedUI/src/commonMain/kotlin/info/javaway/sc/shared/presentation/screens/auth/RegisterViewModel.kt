@@ -3,7 +3,6 @@ package info.javaway.sc.shared.presentation.screens.auth
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import info.javaway.sc.api.models.RegisterRequest
 import info.javaway.sc.shared.domain.repository.AuthRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,14 +84,12 @@ class RegisterViewModel(
         state = RegisterState.Loading
 
         viewModelScope.launch {
-            val request = RegisterRequest(
+            authRepository.register(
                 phone = phone.trim(),
-                name = name.trim(),
                 email = email.trim().ifBlank { null },
+                name = name.trim(),
                 password = password
             )
-
-            authRepository.register(request)
                 .onSuccess {
                     state = RegisterState.Success
                 }

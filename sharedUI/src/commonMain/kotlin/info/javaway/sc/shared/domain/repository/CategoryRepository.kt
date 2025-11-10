@@ -1,9 +1,10 @@
 package info.javaway.sc.shared.domain.repository
 
-import info.javaway.sc.api.models.Category
+import info.javaway.sc.shared.domain.models.Category
 
 /**
  * Репозиторий для работы с категориями
+ * Возвращает Domain модели
  */
 interface CategoryRepository {
     suspend fun getAllCategories(): kotlin.Result<List<Category>>
