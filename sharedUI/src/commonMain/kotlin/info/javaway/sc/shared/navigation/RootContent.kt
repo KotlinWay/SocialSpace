@@ -6,7 +6,6 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import info.javaway.sc.shared.presentation.screens.auth.LoginScreen
 import info.javaway.sc.shared.presentation.screens.auth.RegisterScreen
-import info.javaway.sc.shared.presentation.screens.home.HomeScreen
 
 /**
  * Composable для отображения навигации между экранами
@@ -26,8 +25,8 @@ fun RootContent(component: RootComponent) {
                 onRegisterSuccess = child.onRegisterSuccess,
                 onNavigateToLogin = child.onNavigateToLogin
             )
-            is RootComponent.Child.Home -> HomeScreen(
-                onLogout = child.onLogout
+            is RootComponent.Child.Main -> MainContent(
+                component = child.component
             )
         }
     }

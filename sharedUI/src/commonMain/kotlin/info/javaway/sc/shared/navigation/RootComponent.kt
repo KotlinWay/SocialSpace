@@ -26,7 +26,7 @@ class RootComponent(
             source = navigation,
             serializer = Config.serializer(),
             initialConfiguration = if (tokenManager.getToken() != null) {
-                Config.Home
+                Config.Main
             } else {
                 Config.Login
             },
@@ -38,14 +38,20 @@ class RootComponent(
         when (config) {
             is Config.Login -> Child.Login(
                 onNavigateToRegister = { navigation.push(Config.Register) },
-                onLoginSuccess = { navigation.replaceCurrent(Config.Home) }
+                onLoginSuccess = { navigation.replaceCurrent(Config.Main) }
             )
             is Config.Register -> Child.Register(
                 onNavigateToLogin = { navigation.pop() },
-                onRegisterSuccess = { navigation.replaceCurrent(Config.Home) }
+                onRegisterSuccess = { navigation.replaceCurrent(Config.Main) }
             )
-            is Config.Home -> Child.Home(
-                onLogout = { navigation.replaceCurrent(Config.Login) }
+            is Config.Main -> Child.Main(
+                component = MainComponent(
+                    componentContext = componentContext,
+                    onLogout = {
+                        tokenManager.clearToken()
+                        navigation.replaceCurrent(Config.Login)
+                    }
+                )
             )
         }
 
@@ -60,8 +66,8 @@ class RootComponent(
             val onRegisterSuccess: () -> Unit
         ) : Child()
 
-        data class Home(
-            val onLogout: () -> Unit
+        data class Main(
+            val component: MainComponent
         ) : Child()
     }
 
@@ -74,6 +80,6 @@ class RootComponent(
         data object Register : Config
 
         @Serializable
-        data object Home : Config
+        data object Main : Config
     }
 }
