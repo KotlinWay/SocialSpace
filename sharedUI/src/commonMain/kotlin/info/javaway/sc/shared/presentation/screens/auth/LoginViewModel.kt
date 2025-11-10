@@ -1,11 +1,14 @@
 package info.javaway.sc.shared.presentation.screens.auth
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import info.javaway.sc.shared.domain.models.LoginRequest
 import info.javaway.sc.shared.domain.repository.AuthRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
@@ -14,74 +17,99 @@ import kotlinx.coroutines.launch
 class LoginViewModel(
     private val authRepository: AuthRepository
 ) {
-    private val _phone = MutableStateFlow("")
-    val phone = _phone.asStateFlow()
+    private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    private val _password = MutableStateFlow("")
-    val password = _password.asStateFlow()
+    // Единое состояние экрана
+    var state by mutableStateOf<LoginState>(LoginState.Idle)
+        private set
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading = _isLoading.asStateFlow()
+    // Данные формы (отдельно от состояния загрузки)
+    var phone by mutableStateOf("")
+        private set
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error = _error.asStateFlow()
-
-    private val _isSuccess = MutableStateFlow(false)
-    val isSuccess = _isSuccess.asStateFlow()
-
-    private val viewModelScope = CoroutineScope(Dispatchers.Main)
+    var password by mutableStateOf("")
+        private set
 
     fun onPhoneChange(phone: String) {
-        _phone.value = phone
-        _error.value = null
+        this.phone = phone
+        // Сбрасываем ошибку при изменении данных
+        if (state is LoginState.Error) {
+            state = LoginState.Idle
+        }
     }
 
     fun onPasswordChange(password: String) {
-        _password.value = password
-        _error.value = null
+        this.password = password
+        // Сбрасываем ошибку при изменении данных
+        if (state is LoginState.Error) {
+            state = LoginState.Idle
+        }
     }
 
     fun login() {
-        if (!validateInput()) {
+        // Валидация
+        val validationError = validateInput()
+        if (validationError != null) {
+            state = LoginState.Error(validationError)
             return
         }
 
-        _isLoading.value = true
-        _error.value = null
+        state = LoginState.Loading
 
         viewModelScope.launch {
             val request = LoginRequest(
-                phone = _phone.value.trim(),
-                password = _password.value
+                phone = phone.trim(),
+                password = password
             )
 
             authRepository.login(request)
                 .onSuccess {
-                    _isLoading.value = false
-                    _isSuccess.value = true
+                    state = LoginState.Success
                 }
                 .onFailure { error ->
-                    _isLoading.value = false
-                    _error.value = error.message ?: "Неизвестная ошибка"
+                    state = LoginState.Error(error.message ?: "Неизвестная ошибка")
                 }
         }
     }
 
-    private fun validateInput(): Boolean {
-        when {
-            _phone.value.isBlank() -> {
-                _error.value = "Введите номер телефона"
-                return false
-            }
-            _password.value.isBlank() -> {
-                _error.value = "Введите пароль"
-                return false
-            }
-            _password.value.length < 6 -> {
-                _error.value = "Пароль должен содержать минимум 6 символов"
-                return false
-            }
+    private fun validateInput(): String? {
+        return when {
+            phone.isBlank() -> "Введите номер телефона"
+            password.isBlank() -> "Введите пароль"
+            password.length < 6 -> "Пароль должен содержать минимум 6 символов"
+            else -> null
         }
-        return true
     }
+
+    /**
+     * Очистка ресурсов
+     */
+    fun onCleared() {
+        viewModelScope.cancel()
+    }
+}
+
+/**
+ * Состояния экрана входа
+ */
+sealed interface LoginState {
+    /**
+     * Начальное состояние / форма готова к вводу
+     */
+    data object Idle : LoginState
+
+    /**
+     * Процесс входа
+     */
+    data object Loading : LoginState
+
+    /**
+     * Ошибка входа
+     */
+    data class Error(val message: String) : LoginState
+
+    /**
+     * Успешный вход
+     */
+    data object Success : LoginState
 }

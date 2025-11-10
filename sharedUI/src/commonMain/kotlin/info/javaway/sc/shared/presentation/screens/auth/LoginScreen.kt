@@ -22,18 +22,21 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
     onNavigateToRegister: () -> Unit = {}
 ) {
-    val phone by viewModel.phone.collectAsState()
-    val password by viewModel.password.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val isSuccess by viewModel.isSuccess.collectAsState()
+    // Получаем данные из ViewModel
+    val state = viewModel.state
+    val phone = viewModel.phone
+    val password = viewModel.password
 
     // Отслеживание успешного входа
-    LaunchedEffect(isSuccess) {
-        if (isSuccess) {
+    LaunchedEffect(state) {
+        if (state is LoginState.Success) {
             onLoginSuccess()
         }
     }
+
+    // Определяем состояния для UI
+    val isLoading = state is LoginState.Loading
+    val errorMessage = (state as? LoginState.Error)?.message
 
     Scaffold(
         topBar = {
@@ -100,9 +103,9 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Сообщение об ошибке
-            error?.run {
+            errorMessage?.let { message ->
                 Text(
-                    text = this,
+                    text = message,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,

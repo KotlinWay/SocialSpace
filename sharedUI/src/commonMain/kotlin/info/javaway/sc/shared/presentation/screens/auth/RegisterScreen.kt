@@ -26,21 +26,24 @@ fun RegisterScreen(
     onRegisterSuccess: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {}
 ) {
-    val phone by viewModel.phone.collectAsState()
-    val name by viewModel.name.collectAsState()
-    val email by viewModel.email.collectAsState()
-    val password by viewModel.password.collectAsState()
-    val confirmPassword by viewModel.confirmPassword.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val isSuccess by viewModel.isSuccess.collectAsState()
+    // Получаем данные из ViewModel
+    val state = viewModel.state
+    val phone = viewModel.phone
+    val name = viewModel.name
+    val email = viewModel.email
+    val password = viewModel.password
+    val confirmPassword = viewModel.confirmPassword
 
     // Отслеживание успешной регистрации
-    LaunchedEffect(isSuccess) {
-        if (isSuccess) {
+    LaunchedEffect(state) {
+        if (state is RegisterState.Success) {
             onRegisterSuccess()
         }
     }
+
+    // Определяем состояния для UI
+    val isLoading = state is RegisterState.Loading
+    val errorMessage = (state as? RegisterState.Error)?.message
 
     Scaffold(
         topBar = {
@@ -161,9 +164,9 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            error?.let { error ->
+            errorMessage?.let { message ->
                 Text(
-                    text = error,
+                    text = message,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
