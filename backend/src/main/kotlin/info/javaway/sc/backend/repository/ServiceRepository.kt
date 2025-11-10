@@ -3,15 +3,13 @@ package info.javaway.sc.backend.repository
 import info.javaway.sc.backend.data.tables.Services
 import info.javaway.sc.backend.models.Service
 import info.javaway.sc.backend.models.ServiceStatus
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.transactions.transaction
-import kotlin.time.ExperimentalTime
+import java.time.Instant
 
 /**
  * Repository для работы с услугами в базе данных
@@ -21,7 +19,6 @@ class ServiceRepository {
     /**
      * Создать новую услугу
      */
-    @OptIn(ExperimentalTime::class)
     fun createService(
         userId: Long,
         title: String,
@@ -30,7 +27,7 @@ class ServiceRepository {
         price: String?,
         images: List<String>
     ): Service? = transaction {
-        val now = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val now = Instant.now()
         val imagesJson = Json.encodeToString(images)
 
         val insertStatement = Services.insert {
@@ -132,7 +129,6 @@ class ServiceRepository {
     /**
      * Обновить услугу
      */
-    @OptIn(ExperimentalTime::class)
     fun updateService(
         serviceId: Long,
         title: String? = null,
@@ -142,7 +138,7 @@ class ServiceRepository {
         status: ServiceStatus? = null,
         images: List<String>? = null
     ): Service? = transaction {
-        val now = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val now = Instant.now()
 
         Services.update({ Services.id eq serviceId }) {
             title?.let { value -> it[Services.title] = value }
