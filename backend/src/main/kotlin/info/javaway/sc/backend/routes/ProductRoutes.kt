@@ -40,6 +40,9 @@ fun Route.productRoutes(
          */
         get {
             try {
+                println("🌐 GET /api/products - Получен запрос")
+                println("   Query parameters: ${call.request.queryParameters}")
+
                 val categoryId = call.request.queryParameters["categoryId"]?.toLongOrNull()
                 val statusStr = call.request.queryParameters["status"]
                 val conditionStr = call.request.queryParameters["condition"]
@@ -48,6 +51,16 @@ fun Route.productRoutes(
                 val searchQuery = call.request.queryParameters["search"]
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
                 val pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull()?.coerceIn(1, 100) ?: 20
+
+                println("   Распарсены параметры:")
+                println("   - categoryId: $categoryId")
+                println("   - status: $statusStr")
+                println("   - condition: $conditionStr")
+                println("   - minPrice: $minPrice")
+                println("   - maxPrice: $maxPrice")
+                println("   - search: $searchQuery")
+                println("   - page: $page")
+                println("   - pageSize: $pageSize")
 
                 // Валидация page
                 if (page < 1) {
@@ -77,6 +90,7 @@ fun Route.productRoutes(
 
                 val offset = ((page - 1) * pageSize).toLong()
 
+                println("   📞 Вызов productRepository.getAllProducts()...")
                 // Получаем товары и их количество
                 val products = productRepository.getAllProducts(
                     categoryId = categoryId,
@@ -89,6 +103,7 @@ fun Route.productRoutes(
                     offset = offset
                 )
 
+                println("   📞 Вызов productRepository.countProducts()...")
                 val total = productRepository.countProducts(
                     categoryId = categoryId,
                     status = status,
@@ -108,6 +123,7 @@ fun Route.productRoutes(
                     totalPages = totalPages
                 )
 
+                println("   ✅ Ответ сформирован: products.size=${products.size}, total=$total, totalPages=$totalPages")
                 call.respond(HttpStatusCode.OK, response)
             } catch (e: Exception) {
                 call.application.log.error("Get products error", e)
