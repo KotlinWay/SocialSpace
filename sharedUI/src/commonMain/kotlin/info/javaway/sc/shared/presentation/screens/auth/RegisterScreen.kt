@@ -161,8 +161,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Сообщение об ошибке
-            if (error != null) {
+            error?.let { error ->
                 Text(
                     text = error,
                     color = MaterialTheme.colorScheme.error,

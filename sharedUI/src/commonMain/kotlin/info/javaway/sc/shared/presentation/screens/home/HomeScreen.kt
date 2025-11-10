@@ -84,12 +84,14 @@ fun HomeScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = error,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
+                        error?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(onClick = { viewModel.retry() }) {
                             Text("Повторить")
@@ -124,48 +126,49 @@ fun HomeScreen(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant
                             )
                         ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text(
-                                    text = "Профиль",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // Имя
-                                Row {
+                            user?.let { notNullUser ->
+                                Column(
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
                                     Text(
-                                        text = "Имя: ",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        text = "Профиль",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.primary
                                     )
-                                    Text(
-                                        text = user.name,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
+                                    Spacer(modifier = Modifier.height(12.dp))
 
-                                Spacer(modifier = Modifier.height(8.dp))
+                                    // Имя
+                                    Row {
+                                        Text(
+                                            text = "Имя: ",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = notNullUser.name,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
 
-                                // Телефон
-                                Row {
-                                    Text(
-                                        text = "Телефон: ",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = user.phone,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
+                                    Spacer(modifier = Modifier.height(8.dp))
 
-                                // Email (если есть)
-                                user.email?.let { email ->
+                                    // Телефон
+                                    Row {
+                                        Text(
+                                            text = "Телефон: ",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = notNullUser.phone,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                            }
+
+                                notNullUser.email?.let { email ->
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row {
                                         Text(
@@ -182,7 +185,7 @@ fun HomeScreen(
                                 }
 
                                 // Биография (если есть)
-                                user.bio?.let { bio ->
+                                notNullUser.bio?.let { bio ->
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
                                         text = "О себе:",
@@ -197,7 +200,7 @@ fun HomeScreen(
                                 }
 
                                 // Рейтинг (если есть)
-                                user.rating?.let { rating ->
+                                notNullUser.rating?.let { rating ->
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row {
                                         Text(

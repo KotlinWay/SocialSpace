@@ -1,6 +1,5 @@
 package info.javaway.sc.backend.models
 
-import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
 @Serializable
