@@ -44,8 +44,8 @@ class AuthService(
         if (userRepository.existsByPhone(normalizedPhone)) {
             return AuthResult.Error("Пользователь с таким номером телефона уже существует")
         }
-
-        if (request.email != null && userRepository.existsByEmail(request.email)) {
+        val email = request.email
+        if (email != null && userRepository.existsByEmail(email)) {
             return AuthResult.Error("Пользователь с таким email уже существует")
         }
 
@@ -125,21 +125,23 @@ class AuthService(
      */
     fun updateProfile(userId: Long, request: UpdateProfileRequest): UpdateResult {
         // Валидация
-        if (request.name != null) {
-            val nameValidation = ValidationService.validateName(request.name)
+        val name = request.name
+        val email = request.email
+        if (name != null) {
+            val nameValidation = ValidationService.validateName(name)
             if (!nameValidation.isValid) {
                 return UpdateResult.Error(nameValidation.errorMessage!!)
             }
         }
 
-        if (request.email != null) {
-            val emailValidation = ValidationService.validateEmail(request.email)
+        if (email != null) {
+            val emailValidation = ValidationService.validateEmail(email)
             if (!emailValidation.isValid) {
                 return UpdateResult.Error(emailValidation.errorMessage!!)
             }
 
             // Проверка на существование email у другого пользователя
-            val existingUser = userRepository.findByEmail(request.email)
+            val existingUser = userRepository.findByEmail(email)
             if (existingUser != null && existingUser.id != userId) {
                 return UpdateResult.Error("Пользователь с таким email уже существует")
             }

@@ -250,8 +250,9 @@ fun Route.fileRoutes(
                 }
 
                 // Удаляем старый аватар, если он был
-                if (!user.avatar.isNullOrBlank()) {
-                    FileService.deleteFile(user.avatar)
+                val avatar = user.avatar
+                if (!avatar.isNullOrBlank()) {
+                    FileService.deleteFile(avatar)
                 }
 
                 // Обновляем аватар в профиле пользователя
