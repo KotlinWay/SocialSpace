@@ -60,9 +60,30 @@ data class ProductResponse(
     val isFavorite: Boolean = false
 )
 
+/**
+ * Элемент списка товаров (flat структура для списка)
+ * Совпадает с клиентской моделью ProductResponse
+ */
+@Serializable
+data class ProductListItem(
+    val id: Long,
+    val title: String,
+    val description: String,
+    val price: Double,
+    val condition: ProductCondition,
+    val images: List<String>,
+    val status: ProductStatus,
+    val views: Int,
+    val createdAt: String,
+    val updatedAt: String,
+    val user: UserPublicInfo,
+    val category: CategoryInfo,
+    val isFavorite: Boolean = false
+)
+
 @Serializable
 data class ProductListResponse(
-    val products: List<Product>,
+    val products: List<ProductListItem>,
     val total: Long,
     val page: Int,
     val pageSize: Int,
