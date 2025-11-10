@@ -2,6 +2,7 @@ package info.javaway.sc.shared.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -19,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import info.javaway.sc.shared.presentation.screens.home.HomeScreen
@@ -104,7 +106,7 @@ private fun PlaceholderScreen(title: String) {
                 text = "Экран: $title",
                 style = androidx.compose.material3.MaterialTheme.typography.headlineMedium
             )
-            androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.ui.Modifier.height(8.dp))
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "(В разработке)",
                 style = androidx.compose.material3.MaterialTheme.typography.bodyMedium

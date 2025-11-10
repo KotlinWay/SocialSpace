@@ -81,10 +81,17 @@ fun Route.authRoutes(authService: AuthService = AuthService()) {
         authenticate("auth-jwt") {
             get("/me") {
                 try {
+                    println("👤 GET /api/auth/me called")
+                    println("   Headers: ${call.request.headers.entries().joinToString { "${it.key}: ${it.value}" }}")
+
                     val principal = call.principal<JWTPrincipal>()
+                    println("   Principal: $principal")
+
                     val userId = principal?.payload?.getClaim("userId")?.asLong()
+                    println("   UserId from token: $userId")
 
                     if (userId == null) {
+                        println("   ❌ userId is null, returning 401")
                         call.respond(
                             HttpStatusCode.Unauthorized,
                             ErrorResponse("UNAUTHORIZED", "Неверный токен")
@@ -93,7 +100,10 @@ fun Route.authRoutes(authService: AuthService = AuthService()) {
                     }
 
                     val user = authService.getUserById(userId)
+                    println("   User from DB: $user")
+
                     if (user == null) {
+                        println("   ❌ User not found in DB, returning 404")
                         call.respond(
                             HttpStatusCode.NotFound,
                             ErrorResponse("USER_NOT_FOUND", "Пользователь не найден")
@@ -101,8 +111,11 @@ fun Route.authRoutes(authService: AuthService = AuthService()) {
                         return@get
                     }
 
+                    println("   ✅ Returning user: ${user.name}")
                     call.respond(HttpStatusCode.OK, user)
                 } catch (e: Exception) {
+                    println("   ❌ Exception: ${e.message}")
+                    e.printStackTrace()
                     call.application.log.error("Get current user error", e)
                     call.respond(
                         HttpStatusCode.InternalServerError,

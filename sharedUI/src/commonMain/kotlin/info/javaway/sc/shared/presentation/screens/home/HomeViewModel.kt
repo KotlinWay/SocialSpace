@@ -32,14 +32,22 @@ class HomeViewModel(
         state = state.copy(isLoading = true, error = null)
 
         viewModelScope.launch {
-            when (val result = authRepository.getCurrentUser()) {
+            println("🔍 HomeViewModel: Starting loadCurrentUser")
+            println("🔍 Token: ${tokenManager.getToken()}")
+
+            val result = authRepository.getCurrentUser()
+            println("🔍 Result: $result")
+
+            when (result) {
                 is Result.Success -> {
+                    println("✅ User loaded successfully: ${result.data}")
                     state = state.copy(
                         isLoading = false,
                         user = result.data
                     )
                 }
                 is Result.Error -> {
+                    println("❌ Error loading user: ${result.message}")
                     Napier.e { result.message }
                     state = state.copy(
                         isLoading = false,

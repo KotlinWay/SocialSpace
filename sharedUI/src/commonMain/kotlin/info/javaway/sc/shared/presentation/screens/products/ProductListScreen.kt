@@ -10,10 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -33,25 +29,14 @@ import org.koin.compose.koinInject
 /**
  * Экран списка товаров
  */
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ProductListScreen(
     viewModel: ProductListViewModel = koinInject(),
     onProductClick: (Long) -> Unit = {}
 ) {
     val state = viewModel.state
-    val isRefreshing = viewModel.isRefreshing
 
-    val pullRefreshState = rememberPullRefreshState(
-        refreshing = isRefreshing,
-        onRefresh = { viewModel.refreshProducts() }
-    )
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pullRefresh(pullRefreshState)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         when (state) {
             is ProductListState.Loading -> {
                 LoadingState()
@@ -61,7 +46,8 @@ fun ProductListScreen(
                 ProductList(
                     state = state,
                     onProductClick = onProductClick,
-                    onLoadMore = { viewModel.loadNextPage() }
+                    onLoadMore = { viewModel.loadNextPage() },
+                    onRefresh = { viewModel.refreshProducts() }
                 )
             }
 
@@ -73,15 +59,11 @@ fun ProductListScreen(
             }
 
             is ProductListState.Empty -> {
-                EmptyState()
+                EmptyState(
+                    onRefresh = { viewModel.refreshProducts() }
+                )
             }
         }
-
-        PullRefreshIndicator(
-            refreshing = isRefreshing,
-            state = pullRefreshState,
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
     }
 }
 
@@ -92,7 +74,8 @@ fun ProductListScreen(
 private fun ProductList(
     state: ProductListState.Success,
     onProductClick: (Long) -> Unit,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    onRefresh: () -> Unit
 ) {
     val listState = rememberLazyListState()
 
@@ -194,7 +177,9 @@ private fun ErrorState(
  * Пустое состояние
  */
 @Composable
-private fun EmptyState() {
+private fun EmptyState(
+    onRefresh: () -> Unit
+) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center

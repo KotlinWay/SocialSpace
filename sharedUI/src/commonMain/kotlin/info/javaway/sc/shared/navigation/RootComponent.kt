@@ -48,7 +48,7 @@ class RootComponent(
                 component = MainComponent(
                     componentContext = componentContext,
                     onLogout = {
-                        tokenManager.clearToken()
+                        tokenManager.clear()
                         navigation.replaceCurrent(Config.Login)
                     }
                 )
