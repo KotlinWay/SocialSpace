@@ -1,13 +1,11 @@
 package info.javaway.sc.shared.presentation.screens.auth
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import info.javaway.sc.shared.domain.models.LoginRequest
-import info.javaway.sc.shared.domain.models.Result
 import info.javaway.sc.shared.domain.repository.AuthRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -16,17 +14,31 @@ import kotlinx.coroutines.launch
 class LoginViewModel(
     private val authRepository: AuthRepository
 ) {
-    var state by mutableStateOf(LoginState())
-        private set
+    private val _phone = MutableStateFlow("")
+    val phone = _phone.asStateFlow()
+
+    private val _password = MutableStateFlow("")
+    val password = _password.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error = _error.asStateFlow()
+
+    private val _isSuccess = MutableStateFlow(false)
+    val isSuccess = _isSuccess.asStateFlow()
 
     private val viewModelScope = CoroutineScope(Dispatchers.Main)
 
     fun onPhoneChange(phone: String) {
-        state = state.copy(phone = phone, error = null)
+        _phone.value = phone
+        _error.value = null
     }
 
     fun onPasswordChange(password: String) {
-        state = state.copy(password = password, error = null)
+        _password.value = password
+        _error.value = null
     }
 
     fun login() {
@@ -34,54 +46,42 @@ class LoginViewModel(
             return
         }
 
-        state = state.copy(isLoading = true, error = null)
+        _isLoading.value = true
+        _error.value = null
 
         viewModelScope.launch {
             val request = LoginRequest(
-                phone = state.phone.trim(),
-                password = state.password
+                phone = _phone.value.trim(),
+                password = _password.value
             )
 
-            when (val result = authRepository.login(request)) {
-                is Result.Success -> {
-                    state = state.copy(isLoading = false, isSuccess = true)
+            authRepository.login(request)
+                .onSuccess {
+                    _isLoading.value = false
+                    _isSuccess.value = true
                 }
-                is Result.Error -> {
-                    state = state.copy(
-                        isLoading = false,
-                        error = result.message
-                    )
+                .onFailure { error ->
+                    _isLoading.value = false
+                    _error.value = error.message ?: "Неизвестная ошибка"
                 }
-                is Result.Loading -> {
-                    // Already in loading state
-                }
-            }
         }
     }
 
     private fun validateInput(): Boolean {
         when {
-            state.phone.isBlank() -> {
-                state = state.copy(error = "Введите номер телефона")
+            _phone.value.isBlank() -> {
+                _error.value = "Введите номер телефона"
                 return false
             }
-            state.password.isBlank() -> {
-                state = state.copy(error = "Введите пароль")
+            _password.value.isBlank() -> {
+                _error.value = "Введите пароль"
                 return false
             }
-            state.password.length < 6 -> {
-                state = state.copy(error = "Пароль должен содержать минимум 6 символов")
+            _password.value.length < 6 -> {
+                _error.value = "Пароль должен содержать минимум 6 символов"
                 return false
             }
         }
         return true
     }
 }
-
-data class LoginState(
-    val phone: String = "",
-    val password: String = "",
-    val isLoading: Boolean = false,
-    val isSuccess: Boolean = false,
-    val error: String? = null
-)

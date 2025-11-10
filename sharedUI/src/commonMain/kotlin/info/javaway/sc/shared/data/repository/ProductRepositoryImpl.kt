@@ -20,7 +20,7 @@ class ProductRepositoryImpl(
         search: String?,
         page: Int,
         pageSize: Int
-    ): Result<ProductListResponse> {
+    ): kotlin.Result<ProductListResponse> {
         return apiClient.getProducts(
             categoryId = categoryId,
             status = status,
@@ -33,23 +33,23 @@ class ProductRepositoryImpl(
         )
     }
 
-    override suspend fun getProduct(productId: Long): Result<ProductResponse> {
+    override suspend fun getProduct(productId: Long): kotlin.Result<ProductResponse> {
         return apiClient.getProduct(productId)
     }
 
-    override suspend fun getMyProducts(): Result<List<ProductResponse>> {
+    override suspend fun getMyProducts(): kotlin.Result<List<ProductResponse>> {
         return apiClient.getMyProducts()
     }
 
-    override suspend fun getFavoriteProducts(page: Int, pageSize: Int): Result<ProductListResponse> {
+    override suspend fun getFavoriteProducts(page: Int, pageSize: Int): kotlin.Result<ProductListResponse> {
         return apiClient.getFavoriteProducts(page, pageSize)
     }
 
-    override suspend fun addToFavorites(productId: Long): Result<SuccessResponse> {
+    override suspend fun addToFavorites(productId: Long): kotlin.Result<SuccessResponse> {
         return apiClient.addToFavorites(productId)
     }
 
-    override suspend fun removeFromFavorites(productId: Long): Result<SuccessResponse> {
+    override suspend fun removeFromFavorites(productId: Long): kotlin.Result<SuccessResponse> {
         return apiClient.removeFromFavorites(productId)
     }
 }

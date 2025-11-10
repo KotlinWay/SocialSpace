@@ -50,49 +50,49 @@ class ApiClient(
 
     // ==================== AUTH ====================
 
-    suspend fun register(request: RegisterRequest): Result<AuthResponse> = handleRequest {
+    suspend fun register(request: RegisterRequest): kotlin.Result<AuthResponse> = handleRequest {
         httpClient.post("/api/auth/register") {
             setBody(request)
         }.body()
     }
 
-    suspend fun login(request: LoginRequest): Result<AuthResponse> = handleRequest {
+    suspend fun login(request: LoginRequest): kotlin.Result<AuthResponse> = handleRequest {
         httpClient.post("/api/auth/login") {
             setBody(request)
         }.body()
     }
 
-    suspend fun getCurrentUser(): Result<User> = handleRequest {
+    suspend fun getCurrentUser(): kotlin.Result<User> = handleRequest {
         httpClient.get("/api/auth/me").body()
     }
 
     // ==================== USERS ====================
 
-    suspend fun getUser(userId: Long): Result<User> = handleRequest {
+    suspend fun getUser(userId: Long): kotlin.Result<User> = handleRequest {
         httpClient.get("/api/users/$userId").body()
     }
 
-    suspend fun updateProfile(userId: Long, request: UpdateProfileRequest): Result<User> = handleRequest {
+    suspend fun updateProfile(userId: Long, request: UpdateProfileRequest): kotlin.Result<User> = handleRequest {
         httpClient.put("/api/users/$userId") {
             setBody(request)
         }.body()
     }
 
-    suspend fun deleteAccount(userId: Long): Result<SuccessResponse> = handleRequest {
+    suspend fun deleteAccount(userId: Long): kotlin.Result<SuccessResponse> = handleRequest {
         httpClient.delete("/api/users/$userId").body()
     }
 
     // ==================== CATEGORIES ====================
 
-    suspend fun getAllCategories(): Result<List<Category>> = handleRequest {
+    suspend fun getAllCategories(): kotlin.Result<List<Category>> = handleRequest {
         httpClient.get("/api/categories").body()
     }
 
-    suspend fun getProductCategories(): Result<List<Category>> = handleRequest {
+    suspend fun getProductCategories(): kotlin.Result<List<Category>> = handleRequest {
         httpClient.get("/api/categories/products").body()
     }
 
-    suspend fun getServiceCategories(): Result<List<Category>> = handleRequest {
+    suspend fun getServiceCategories(): kotlin.Result<List<Category>> = handleRequest {
         httpClient.get("/api/categories/services").body()
     }
 
@@ -107,7 +107,7 @@ class ApiClient(
         search: String? = null,
         page: Int = 1,
         pageSize: Int = 20
-    ): Result<ProductListResponse> = handleRequest {
+    ): kotlin.Result<ProductListResponse> = handleRequest {
         httpClient.get("/api/products") {
             parameter("categoryId", categoryId)
             parameter("status", status?.name)
@@ -120,26 +120,26 @@ class ApiClient(
         }.body()
     }
 
-    suspend fun getProduct(productId: Long): Result<ProductResponse> = handleRequest {
+    suspend fun getProduct(productId: Long): kotlin.Result<ProductResponse> = handleRequest {
         httpClient.get("/api/products/$productId").body()
     }
 
-    suspend fun getMyProducts(): Result<List<ProductResponse>> = handleRequest {
+    suspend fun getMyProducts(): kotlin.Result<List<ProductResponse>> = handleRequest {
         httpClient.get("/api/products/my").body()
     }
 
-    suspend fun getFavoriteProducts(page: Int = 1, pageSize: Int = 20): Result<ProductListResponse> = handleRequest {
+    suspend fun getFavoriteProducts(page: Int = 1, pageSize: Int = 20): kotlin.Result<ProductListResponse> = handleRequest {
         httpClient.get("/api/products/favorites") {
             parameter("page", page)
             parameter("pageSize", pageSize)
         }.body()
     }
 
-    suspend fun addToFavorites(productId: Long): Result<SuccessResponse> = handleRequest {
+    suspend fun addToFavorites(productId: Long): kotlin.Result<SuccessResponse> = handleRequest {
         httpClient.post("/api/products/$productId/favorite").body()
     }
 
-    suspend fun removeFromFavorites(productId: Long): Result<SuccessResponse> = handleRequest {
+    suspend fun removeFromFavorites(productId: Long): kotlin.Result<SuccessResponse> = handleRequest {
         httpClient.delete("/api/products/$productId/favorite").body()
     }
 
@@ -151,7 +151,7 @@ class ApiClient(
         search: String? = null,
         page: Int = 1,
         pageSize: Int = 20
-    ): Result<ServiceListResponse> = handleRequest {
+    ): kotlin.Result<ServiceListResponse> = handleRequest {
         httpClient.get("/api/services") {
             parameter("categoryId", categoryId)
             parameter("status", status?.name)
@@ -161,19 +161,19 @@ class ApiClient(
         }.body()
     }
 
-    suspend fun getService(serviceId: Long): Result<ServiceResponse> = handleRequest {
+    suspend fun getService(serviceId: Long): kotlin.Result<ServiceResponse> = handleRequest {
         httpClient.get("/api/services/$serviceId").body()
     }
 
-    suspend fun getMyServices(): Result<List<ServiceResponse>> = handleRequest {
+    suspend fun getMyServices(): kotlin.Result<List<ServiceResponse>> = handleRequest {
         httpClient.get("/api/services/my").body()
     }
 
     // ==================== ERROR HANDLING ====================
 
-    private suspend fun <T> handleRequest(block: suspend () -> T): Result<T> {
+    private suspend fun <T> handleRequest(block: suspend () -> T): kotlin.Result<T> {
         return try {
-            Result.Success(block())
+            kotlin.Result.success(block())
         } catch (e: ClientRequestException) {
             // 4xx errors
             println("❌ ClientRequestException: ${e.response.status}")
@@ -182,21 +182,21 @@ class ApiClient(
             try {
                 val errorResponse: ErrorResponse = e.response.body()
                 println("   Error body: $errorResponse")
-                Result.Error(errorResponse.message, errorResponse.code)
+                kotlin.Result.failure(Exception(errorResponse.message))
             } catch (parseError: Exception) {
                 println("   Failed to parse error body: ${parseError.message}")
-                Result.Error("Ошибка клиента: ${e.response.status.description}")
+                kotlin.Result.failure(Exception("Ошибка клиента: ${e.response.status.description}"))
             }
         } catch (e: ServerResponseException) {
             // 5xx errors
             println("❌ ServerResponseException: ${e.response.status}")
             println("   URL: ${e.response.call.request.url}")
-            Result.Error("Ошибка сервера: ${e.response.status.description}")
+            kotlin.Result.failure(Exception("Ошибка сервера: ${e.response.status.description}"))
         } catch (e: Exception) {
             // Network or other errors
             println("❌ Exception: ${e.message}")
             e.printStackTrace()
-            Result.Error(e.message ?: "Неизвестная ошибка")
+            kotlin.Result.failure(e)
         }
     }
 

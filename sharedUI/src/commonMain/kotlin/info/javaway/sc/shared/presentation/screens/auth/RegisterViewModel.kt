@@ -1,13 +1,11 @@
 package info.javaway.sc.shared.presentation.screens.auth
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import info.javaway.sc.shared.domain.models.RegisterRequest
-import info.javaway.sc.shared.domain.models.Result
 import info.javaway.sc.shared.domain.repository.AuthRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -16,29 +14,55 @@ import kotlinx.coroutines.launch
 class RegisterViewModel(
     private val authRepository: AuthRepository
 ) {
-    var state by mutableStateOf(RegisterState())
-        private set
+    private val _phone = MutableStateFlow("")
+    val phone = _phone.asStateFlow()
+
+    private val _name = MutableStateFlow("")
+    val name = _name.asStateFlow()
+
+    private val _email = MutableStateFlow("")
+    val email = _email.asStateFlow()
+
+    private val _password = MutableStateFlow("")
+    val password = _password.asStateFlow()
+
+    private val _confirmPassword = MutableStateFlow("")
+    val confirmPassword = _confirmPassword.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error = _error.asStateFlow()
+
+    private val _isSuccess = MutableStateFlow(false)
+    val isSuccess = _isSuccess.asStateFlow()
 
     private val viewModelScope = CoroutineScope(Dispatchers.Main)
 
     fun onPhoneChange(phone: String) {
-        state = state.copy(phone = phone, error = null)
+        _phone.value = phone
+        _error.value = null
     }
 
     fun onNameChange(name: String) {
-        state = state.copy(name = name, error = null)
+        _name.value = name
+        _error.value = null
     }
 
     fun onEmailChange(email: String) {
-        state = state.copy(email = email, error = null)
+        _email.value = email
+        _error.value = null
     }
 
     fun onPasswordChange(password: String) {
-        state = state.copy(password = password, error = null)
+        _password.value = password
+        _error.value = null
     }
 
     fun onConfirmPasswordChange(confirmPassword: String) {
-        state = state.copy(confirmPassword = confirmPassword, error = null)
+        _confirmPassword.value = confirmPassword
+        _error.value = null
     }
 
     fun register() {
@@ -46,69 +70,65 @@ class RegisterViewModel(
             return
         }
 
-        state = state.copy(isLoading = true, error = null)
+        _isLoading.value = true
+        _error.value = null
 
         viewModelScope.launch {
             val request = RegisterRequest(
-                phone = state.phone.trim(),
-                name = state.name.trim(),
-                email = state.email.trim().ifBlank { null },
-                password = state.password
+                phone = _phone.value.trim(),
+                name = _name.value.trim(),
+                email = _email.value.trim().ifBlank { null },
+                password = _password.value
             )
 
-            when (val result = authRepository.register(request)) {
-                is Result.Success -> {
-                    state = state.copy(isLoading = false, isSuccess = true)
+            authRepository.register(request)
+                .onSuccess {
+                    _isLoading.value = false
+                    _isSuccess.value = true
                 }
-                is Result.Error -> {
-                    state = state.copy(
-                        isLoading = false,
-                        error = result.message
-                    )
+                .onFailure { error ->
+                    _isLoading.value = false
+                    _error.value = error.message ?: "Неизвестная ошибка"
                 }
-                is Result.Loading -> {
-                    // Already in loading state
-                }
-            }
         }
     }
 
     private fun validateInput(): Boolean {
         when {
-            state.phone.isBlank() -> {
-                state = state.copy(error = "Введите номер телефона")
+            _phone.value.isBlank() -> {
+                _error.value = "Введите номер телефона"
                 return false
             }
-            !isValidPhone(state.phone) -> {
-                state = state.copy(error = "Некорректный формат телефона (например: +79991234567)")
+            !isValidPhone(_phone.value) -> {
+                _error.value = "Некорректный формат телефона (например: +79991234567)"
                 return false
             }
-            state.name.isBlank() -> {
-                state = state.copy(error = "Введите ваше имя")
+            _name.value.isBlank() -> {
+                _error.value = "Введите ваше имя"
                 return false
             }
-            state.name.length < 2 -> {
-                state = state.copy(error = "Имя должно содержать минимум 2 символа")
+            _name.value.length < 2 -> {
+                _error.value = "Имя должно содержать минимум 2 символа"
                 return false
             }
-            state.email.isNotBlank() && !isValidEmail(state.email) -> {
-                state = state.copy(error = "Некорректный формат email")
+            _email.value.isNotBlank() && !isValidEmail(_email.value) -> {
+                _error.value = "Некорректный формат email"
                 return false
             }
-            state.password.isBlank() -> {
-                state = state.copy(error = "Введите пароль")
+            _password.value.isBlank() -> {
+                _error.value = "Введите пароль"
                 return false
             }
-            state.password.length < 6 -> {
-                state = state.copy(error = "Пароль должен содержать минимум 6 символов")
+            _password.value.length < 6 -> {
+                _error.value = "Пароль должен содержать минимум 6 символов"
                 return false
             }
-            state.confirmPassword.isBlank() -> {
-                state = state.copy(error = "Подтвердите пароль")
+            _confirmPassword.value.isBlank() -> {
+                _error.value = "Подтвердите пароль"
                 return false
             }
-            state.password != state.confirmPassword -> {
-                state = state.copy(error = "Пароли не совпадают")
+            _password.value != _confirmPassword.value -> {
+                _error.value = "Пароли не совпадают"
                 return false
             }
         }
@@ -127,14 +147,3 @@ class RegisterViewModel(
         return emailRegex.matches(email.trim())
     }
 }
-
-data class RegisterState(
-    val phone: String = "",
-    val name: String = "",
-    val email: String = "",
-    val password: String = "",
-    val confirmPassword: String = "",
-    val isLoading: Boolean = false,
-    val isSuccess: Boolean = false,
-    val error: String? = null
-)

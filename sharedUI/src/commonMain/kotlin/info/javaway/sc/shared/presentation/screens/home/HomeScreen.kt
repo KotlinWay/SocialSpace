@@ -21,11 +21,14 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinInject(),
     onLogout: () -> Unit = {}
 ) {
-    val state = viewModel.state
+    val user by viewModel.user.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val isLoggedOut by viewModel.isLoggedOut.collectAsState()
 
     // Отслеживание выхода из системы
-    LaunchedEffect(state.isLoggedOut) {
-        if (state.isLoggedOut) {
+    LaunchedEffect(isLoggedOut) {
+        if (isLoggedOut) {
             onLogout()
         }
     }
@@ -57,7 +60,7 @@ fun HomeScreen(
         ) {
             when {
                 // Состояние загрузки
-                state.isLoading -> {
+                isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier
                             .size(48.dp)
@@ -66,7 +69,7 @@ fun HomeScreen(
                 }
 
                 // Ошибка загрузки
-                state.error != null -> {
+                error != null -> {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -82,7 +85,7 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = state.error,
+                            text = error,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -95,7 +98,7 @@ fun HomeScreen(
                 }
 
                 // Успешная загрузка данных пользователя
-                state.user != null -> {
+                user != null -> {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -139,7 +142,7 @@ fun HomeScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        text = state.user.name,
+                                        text = user.name,
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
@@ -155,14 +158,14 @@ fun HomeScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        text = state.user.phone,
+                                        text = user.phone,
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
 
                                 // Email (если есть)
-                                state.user.email?.let { email ->
+                                user.email?.let { email ->
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row {
                                         Text(
@@ -179,7 +182,7 @@ fun HomeScreen(
                                 }
 
                                 // Биография (если есть)
-                                state.user.bio?.let { bio ->
+                                user.bio?.let { bio ->
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
                                         text = "О себе:",
@@ -194,7 +197,7 @@ fun HomeScreen(
                                 }
 
                                 // Рейтинг (если есть)
-                                state.user.rating?.let { rating ->
+                                user.rating?.let { rating ->
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row {
                                         Text(
