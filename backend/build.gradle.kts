@@ -31,7 +31,7 @@ dependencies {
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.jdbc)
-    implementation(libs.exposed.kotlin.datetime)
+    implementation(libs.exposed.java.time)
 
     // Database
     implementation(libs.postgresql)
@@ -39,9 +39,6 @@ dependencies {
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)
-
-    // DateTime
-    implementation(libs.kotlinx.datetime)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)

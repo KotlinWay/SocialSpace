@@ -3,13 +3,10 @@ package info.javaway.sc.backend.repository
 import info.javaway.sc.backend.data.tables.Users
 import info.javaway.sc.backend.models.User
 import info.javaway.sc.backend.models.UserRole
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import kotlin.time.ExperimentalTime
+import java.time.Instant
 
 /**
  * Repository для работы с пользователями в базе данных
@@ -19,7 +16,6 @@ class UserRepository {
     /**
      * Создать нового пользователя
      */
-    @OptIn(ExperimentalTime::class)
     fun createUser(
         phone: String,
         email: String?,
@@ -27,14 +23,12 @@ class UserRepository {
         passwordHash: String,
         role: UserRole = UserRole.USER
     ): User? = transaction {
-        val now = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
         val insertStatement = Users.insert {
             it[Users.phone] = phone
             it[Users.email] = email
             it[Users.name] = name
             it[Users.passwordHash] = passwordHash
-            it[Users.createdAt] = now
+            it[Users.createdAt] = Instant.now()
             it[Users.role] = role
         }
 

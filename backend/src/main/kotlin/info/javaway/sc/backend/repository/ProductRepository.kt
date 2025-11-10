@@ -7,15 +7,13 @@ import info.javaway.sc.backend.data.tables.Users
 import info.javaway.sc.backend.models.Product
 import info.javaway.sc.backend.models.ProductCondition
 import info.javaway.sc.backend.models.ProductStatus
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.transactions.transaction
-import kotlin.time.ExperimentalTime
+import java.time.Instant
 
 /**
  * Repository для работы с товарами в базе данных
@@ -25,7 +23,6 @@ class ProductRepository {
     /**
      * Создать новый товар
      */
-    @OptIn(ExperimentalTime::class)
     fun createProduct(
         userId: Long,
         title: String,
@@ -35,7 +32,7 @@ class ProductRepository {
         condition: ProductCondition,
         images: List<String>
     ): Product? = transaction {
-        val now = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val now = Instant.now()
         val imagesJson = Json.encodeToString(images)
 
         val insertStatement = Products.insert {
@@ -156,7 +153,6 @@ class ProductRepository {
     /**
      * Обновить товар
      */
-    @OptIn(ExperimentalTime::class)
     fun updateProduct(
         productId: Long,
         title: String? = null,
@@ -167,7 +163,7 @@ class ProductRepository {
         status: ProductStatus? = null,
         images: List<String>? = null
     ): Product? = transaction {
-        val now = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val now = Instant.now()
 
         Products.update({ Products.id eq productId }) {
             title?.let { value -> it[Products.title] = value }
@@ -208,15 +204,12 @@ class ProductRepository {
     /**
      * Добавить товар в избранное
      */
-    @OptIn(ExperimentalTime::class)
     fun addToFavorites(userId: Long, productId: Long): Boolean = transaction {
         try {
-            val now = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
             Favorites.insert {
                 it[Favorites.userId] = userId
                 it[Favorites.productId] = productId
-                it[Favorites.createdAt] = now
+                it[Favorites.createdAt] = Instant.now()
             }
             true
         } catch (e: Exception) {

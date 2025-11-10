@@ -2,7 +2,8 @@ package info.javaway.sc.backend.data.tables
 
 import info.javaway.sc.backend.models.UserRole
 import org.jetbrains.exposed.dao.id.LongIdTable
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.sql.javatime.timestamp
+import java.time.Instant
 
 object Users : LongIdTable("users") {
     val phone = varchar("phone", 20).uniqueIndex()
@@ -12,7 +13,7 @@ object Users : LongIdTable("users") {
     val avatar = varchar("avatar", 500).nullable()
     val bio = text("bio").nullable()
     val rating = double("rating").nullable()
-    val createdAt = datetime("created_at")
+    val createdAt = timestamp("created_at").default(Instant.now())
     val isVerified = bool("is_verified").default(false)
     val role = enumerationByName("role", 20, UserRole::class).default(UserRole.USER)
 }
