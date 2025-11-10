@@ -3,7 +3,7 @@ package info.javaway.sc.shared.presentation.screens.auth
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import info.javaway.sc.shared.domain.models.LoginRequest
+import info.javaway.sc.api.models.LoginRequest
 import info.javaway.sc.shared.domain.repository.AuthRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

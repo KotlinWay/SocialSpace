@@ -1,6 +1,6 @@
 package info.javaway.sc.backend.data.tables
 
-import info.javaway.sc.backend.models.ServiceStatus
+import info.javaway.sc.api.models.ServiceStatus
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant

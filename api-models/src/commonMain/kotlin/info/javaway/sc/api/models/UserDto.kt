@@ -1,4 +1,4 @@
-package info.javaway.sc.shared.domain.models
+package info.javaway.sc.api.models
 
 import kotlinx.serialization.Serializable
 
@@ -39,4 +39,21 @@ data class UpdateProfileRequest(
     val name: String? = null,
     val email: String? = null,
     val bio: String? = null
+)
+
+/**
+ * Запрос на обновление токена
+ */
+@Serializable
+data class RefreshTokenRequest(
+    val token: String
+)
+
+/**
+ * Ответ с токеном
+ */
+@Serializable
+data class TokenResponse(
+    val token: String,
+    val expiresIn: Long
 )

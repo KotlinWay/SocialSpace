@@ -38,8 +38,8 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import info.javaway.sc.shared.domain.models.ProductCondition
-import info.javaway.sc.shared.domain.models.ProductResponse
+import info.javaway.sc.api.models.ProductCondition
+import info.javaway.sc.api.models.ProductResponse
 
 /**
  * Карточка товара для списка

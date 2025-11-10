@@ -1,8 +1,8 @@
 package info.javaway.sc.backend.repository
 
 import info.javaway.sc.backend.data.tables.Categories
-import info.javaway.sc.backend.models.Category
-import info.javaway.sc.backend.models.CategoryType
+import info.javaway.sc.api.models.Category
+import info.javaway.sc.api.models.CategoryType
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction

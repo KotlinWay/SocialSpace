@@ -1,6 +1,6 @@
 package info.javaway.sc.shared.data.api
 
-import info.javaway.sc.shared.domain.models.*
+import info.javaway.sc.api.models.*
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.call.*

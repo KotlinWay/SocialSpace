@@ -1,6 +1,6 @@
 package info.javaway.sc.backend.routes
 
-import info.javaway.sc.backend.models.*
+import info.javaway.sc.api.models.*
 import info.javaway.sc.backend.repository.CategoryRepository
 import info.javaway.sc.backend.repository.ProductRepository
 import info.javaway.sc.backend.repository.UserRepository

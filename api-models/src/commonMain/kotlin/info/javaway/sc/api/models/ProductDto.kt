@@ -1,36 +1,10 @@
-package info.javaway.sc.backend.models
+package info.javaway.sc.api.models
 
 import kotlinx.serialization.Serializable
 
-@Serializable
-data class Product(
-    val id: Long,
-    val userId: Long,
-    val title: String,
-    val description: String,
-    val price: Double,
-    val categoryId: Long,
-    val condition: ProductCondition,
-    val images: List<String>,
-    val status: ProductStatus,
-    val views: Int = 0,
-    val createdAt: String,
-    val updatedAt: String
-)
-
-@Serializable
-enum class ProductCondition {
-    NEW,
-    USED
-}
-
-@Serializable
-enum class ProductStatus {
-    ACTIVE,
-    SOLD,
-    ARCHIVED
-}
-
+/**
+ * Запрос на создание товара
+ */
 @Serializable
 data class CreateProductRequest(
     val title: String,
@@ -41,6 +15,9 @@ data class CreateProductRequest(
     val images: List<String>
 )
 
+/**
+ * Запрос на обновление товара
+ */
 @Serializable
 data class UpdateProductRequest(
     val title: String? = null,
@@ -52,6 +29,9 @@ data class UpdateProductRequest(
     val images: List<String>? = null
 )
 
+/**
+ * Ответ с деталями товара (включает информацию о пользователе и категории)
+ */
 @Serializable
 data class ProductResponse(
     val product: Product,
@@ -62,7 +42,6 @@ data class ProductResponse(
 
 /**
  * Элемент списка товаров (flat структура для списка)
- * Совпадает с клиентской моделью ProductResponse
  */
 @Serializable
 data class ProductListItem(
@@ -81,6 +60,9 @@ data class ProductListItem(
     val isFavorite: Boolean = false
 )
 
+/**
+ * Ответ со списком товаров (с пагинацией)
+ */
 @Serializable
 data class ProductListResponse(
     val products: List<ProductListItem>,
@@ -88,21 +70,4 @@ data class ProductListResponse(
     val page: Int,
     val pageSize: Int,
     val totalPages: Int
-)
-
-@Serializable
-data class UserPublicInfo(
-    val id: Long,
-    val name: String,
-    val avatar: String?,
-    val phone: String,
-    val rating: Double?,
-    val isVerified: Boolean = false
-)
-
-@Serializable
-data class CategoryInfo(
-    val id: Long,
-    val name: String,
-    val icon: String?
 )

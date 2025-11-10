@@ -1,6 +1,6 @@
 package info.javaway.sc.backend.services
 
-import info.javaway.sc.backend.models.*
+import info.javaway.sc.api.models.*
 import info.javaway.sc.backend.repository.UserRepository
 import info.javaway.sc.backend.utils.JwtConfig
 import info.javaway.sc.backend.utils.PasswordHasher

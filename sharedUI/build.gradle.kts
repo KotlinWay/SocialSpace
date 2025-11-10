@@ -29,6 +29,9 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            // API Models - общие модели для клиента и сервера
+            implementation(project(":api-models"))
+
             // Compose
             implementation(compose.runtime)
             implementation(compose.foundation)

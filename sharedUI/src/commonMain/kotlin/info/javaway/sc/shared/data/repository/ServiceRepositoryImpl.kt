@@ -1,7 +1,7 @@
 package info.javaway.sc.shared.data.repository
 
 import info.javaway.sc.shared.data.api.ApiClient
-import info.javaway.sc.shared.domain.models.*
+import info.javaway.sc.api.models.*
 import info.javaway.sc.shared.domain.repository.ServiceRepository
 
 /**

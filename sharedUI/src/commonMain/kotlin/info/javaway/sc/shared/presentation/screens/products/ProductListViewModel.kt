@@ -3,7 +3,7 @@ package info.javaway.sc.shared.presentation.screens.products
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import info.javaway.sc.shared.domain.models.ProductResponse
+import info.javaway.sc.api.models.ProductResponse
 import info.javaway.sc.shared.domain.repository.ProductRepository
 import io.github.aakira.napier.Napier.e
 import kotlinx.coroutines.CoroutineScope

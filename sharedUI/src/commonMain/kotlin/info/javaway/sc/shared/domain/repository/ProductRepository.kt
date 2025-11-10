@@ -1,6 +1,6 @@
 package info.javaway.sc.shared.domain.repository
 
-import info.javaway.sc.shared.domain.models.*
+import info.javaway.sc.api.models.*
 
 /**
  * Репозиторий для работы с товарами

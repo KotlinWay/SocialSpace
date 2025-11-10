@@ -1,7 +1,7 @@
 package info.javaway.sc.backend.routes
 
-import info.javaway.sc.backend.models.ErrorResponse
-import info.javaway.sc.backend.models.FileUploadResponse
+import info.javaway.sc.api.models.ErrorResponse
+import info.javaway.sc.api.models.FileUploadResponse
 import info.javaway.sc.backend.repository.UserRepository
 import info.javaway.sc.backend.services.FileService
 import info.javaway.sc.backend.services.FileType

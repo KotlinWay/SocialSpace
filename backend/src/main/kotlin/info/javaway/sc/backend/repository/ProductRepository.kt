@@ -4,9 +4,9 @@ import info.javaway.sc.backend.data.tables.Categories
 import info.javaway.sc.backend.data.tables.Favorites
 import info.javaway.sc.backend.data.tables.Products
 import info.javaway.sc.backend.data.tables.Users
-import info.javaway.sc.backend.models.Product
-import info.javaway.sc.backend.models.ProductCondition
-import info.javaway.sc.backend.models.ProductStatus
+import info.javaway.sc.api.models.Product
+import info.javaway.sc.api.models.ProductCondition
+import info.javaway.sc.api.models.ProductStatus
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*

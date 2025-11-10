@@ -1,7 +1,7 @@
 package info.javaway.sc.backend.routes
 
-import info.javaway.sc.backend.models.CategoryType
-import info.javaway.sc.backend.models.ErrorResponse
+import info.javaway.sc.api.models.CategoryType
+import info.javaway.sc.api.models.ErrorResponse
 import info.javaway.sc.backend.repository.CategoryRepository
 import io.ktor.http.*
 import io.ktor.server.application.*

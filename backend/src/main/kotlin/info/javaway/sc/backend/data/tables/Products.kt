@@ -1,7 +1,7 @@
 package info.javaway.sc.backend.data.tables
 
-import info.javaway.sc.backend.models.ProductCondition
-import info.javaway.sc.backend.models.ProductStatus
+import info.javaway.sc.api.models.ProductCondition
+import info.javaway.sc.api.models.ProductStatus
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant

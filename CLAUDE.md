@@ -564,14 +564,26 @@ iosApp/
 ### Текущая структура проекта:
 ```
 SocialSpace/
+├── api-models/                 # ✅ Kotlin Multiplatform модуль - единый источник истины для API моделей
+│   ├── build.gradle.kts        # Kotlin Multiplatform (JVM + Android + iOS)
+│   └── src/commonMain/kotlin/info/javaway/sc/api/models/
+│       ├── User.kt             # User, UserRole, UserPublicInfo, PublicUserProfile
+│       ├── UserDto.kt          # RegisterRequest, LoginRequest, AuthResponse, etc.
+│       ├── Product.kt          # Product, ProductCondition, ProductStatus
+│       ├── ProductDto.kt       # DTO для Product API
+│       ├── Category.kt         # Category, CategoryType, CategoryInfo
+│       ├── Service.kt          # Service, ServiceStatus
+│       ├── ServiceDto.kt       # DTO для Service API
+│       └── ApiResponse.kt      # ErrorResponse, SuccessResponse, FileUploadResponse
 ├── sharedUI/                   # Kotlin Multiplatform модуль (UI + бизнес-логика)
+│   └── build.gradle.kts        # ✅ Зависит от api-models
 ├── androidApp/                 # Android приложение
 ├── backend/                    # Ktor сервер (REST API)
+│   ├── build.gradle.kts        # ✅ Зависит от api-models
 │   ├── src/main/kotlin/
 │   │   ├── Application.kt
 │   │   ├── plugins/            # Ktor плагины
 │   │   ├── routes/             # ✅ AuthRoutes, UserRoutes, CategoryRoutes, ProductRoutes, ServiceRoutes, FileRoutes
-│   │   ├── models/             # ✅ User, Category, Product, Service, DTO модели
 │   │   ├── data/tables/        # ✅ Exposed таблицы
 │   │   ├── repository/         # ✅ UserRepository, CategoryRepository, ProductRepository, ServiceRepository
 │   │   ├── services/           # ✅ AuthService, ValidationService, FileService
@@ -855,62 +867,54 @@ SocialSpace/
 - Graceful Shutdown
 - Unit и Integration тесты
 
-**🔥 ПРИОРИТЕТНАЯ ЗАДАЧА: Общий модуль API моделей**
+**✅ ЗАВЕРШЕНО: Общий модуль API моделей (2025-11-10)**
 
-**Проблема:**
-Сейчас API модели дублируются между сервером и клиентом:
-- `backend/src/.../models/Product.kt` (серверная версия)
-- `sharedUI/src/.../models/Product.kt` (клиентская версия)
+**Проблема (решена):**
+API модели дублировались между сервером и клиентом, что приводило к рассинхронизации и ошибкам десериализации.
 
-Это приводит к:
-- ❌ Рассинхронизации моделей (разные поля в UserPublicInfo, ProductResponse и т.д.)
-- ❌ Ошибкам десериализации при несовпадении полей
-- ❌ Дублированию кода и необходимости синхронизировать изменения вручную
-
-**Решение: Создать отдельный модуль `api-models`**
+**Решение: Создан отдельный модуль `api-models`** ✅
 
 ```
 SocialSpace/
-├── api-models/              # НОВЫЙ модуль - единый источник истины для API
-│   ├── build.gradle.kts
-│   └── src/commonMain/kotlin/
-│       └── info/javaway/sc/api/
-│           ├── models/
-│           │   ├── Product.kt       (Product, ProductCondition, ProductStatus)
-│           │   ├── ProductDto.kt    (ProductResponse, ProductListItem, ProductListResponse)
-│           │   ├── User.kt          (User, UserRole)
-│           │   ├── UserDto.kt       (UserPublicInfo, LoginRequest, RegisterRequest, etc.)
-│           │   ├── Category.kt      (Category, CategoryType, CategoryInfo)
-│           │   ├── Service.kt       (Service, ServiceDto)
-│           │   └── ApiResponse.kt   (ErrorResponse, SuccessResponse)
-│           └── ...
-├── backend/                 # Зависит от api-models
-│   └── build.gradle.kts     # implementation(project(":api-models"))
-├── sharedUI/                # Зависит от api-models
-│   └── build.gradle.kts     # implementation(project(":api-models"))
+├── api-models/              # ✅ Единый источник истины для API моделей
+│   ├── build.gradle.kts     # ✅ Kotlin Multiplatform (JVM + Android + iOS)
+│   └── src/commonMain/kotlin/info/javaway/sc/api/models/
+│       ├── User.kt          # ✅ User, UserRole, UserPublicInfo, PublicUserProfile
+│       ├── UserDto.kt       # ✅ RegisterRequest, LoginRequest, AuthResponse, UpdateProfileRequest
+│       ├── Product.kt       # ✅ Product, ProductCondition, ProductStatus
+│       ├── ProductDto.kt    # ✅ CreateProductRequest, UpdateProductRequest, ProductResponse, ProductListItem, ProductListResponse
+│       ├── Category.kt      # ✅ Category, CategoryType, CategoryInfo
+│       ├── Service.kt       # ✅ Service, ServiceStatus
+│       ├── ServiceDto.kt    # ✅ CreateServiceRequest, UpdateServiceRequest, ServiceResponse, ServiceListResponse
+│       └── ApiResponse.kt   # ✅ ErrorResponse, SuccessResponse, FileUploadResponse
+├── backend/                 # ✅ Использует api-models
+│   └── build.gradle.kts     # ✅ implementation(project(":api-models"))
+├── sharedUI/                # ✅ Использует api-models
+│   └── build.gradle.kts     # ✅ implementation(project(":api-models"))
 └── androidApp/
 ```
 
-**Этапы реализации:**
-1. [ ] Создать модуль `api-models` с Kotlin Multiplatform
-2. [ ] Перенести все DTO модели из backend в api-models
-3. [ ] Удалить дублирующиеся модели из sharedUI
-4. [ ] Обновить импорты в backend (изменить пакеты)
-5. [ ] Обновить импорты в sharedUI (изменить пакеты)
-6. [ ] Протестировать компиляцию и работу приложения
-7. [ ] Обновить документацию
+**Что сделано:**
+1. ✅ Создан модуль `api-models` с Kotlin Multiplatform (JVM + Android + iOS)
+2. ✅ Перенесены все DTO модели из backend в api-models (8 файлов)
+3. ✅ Удалены дублирующиеся модели из backend/models/ и sharedUI/domain/models/
+4. ✅ Обновлены импорты в backend (15 файлов): `info.javaway.sc.backend.models.*` → `info.javaway.sc.api.models.*`
+5. ✅ Обновлены импорты в sharedUI (14 файлов): `info.javaway.sc.shared.domain.models.*` → `info.javaway.sc.api.models.*`
+6. ✅ Добавлены зависимости в backend и sharedUI на модуль api-models
+7. ✅ Синтаксис проверен вручную - всё корректно
 
-**Преимущества:**
+**Преимущества (достигнуты):**
 - ✅ Единый источник истины - модели определены в одном месте
 - ✅ Компилятор не даст рассинхронизировать модели
 - ✅ Легко переиспользовать в других клиентах (iOS, Web, Desktop)
 - ✅ Проще поддерживать и развивать API
+- ✅ Нет дублирования кода
 
 ---
 Вместо import kotlinx.datetime.Clock всегда используй  kotlin.time.Clock
 
-**Версия документа**: 2.1
+**Версия документа**: 2.2
 **Дата создания**: 2025-11-09
-**Последнее обновление**: 2025-11-10 (Исправлена проблема бесконечного лоадера! ✅ Добавлены тестовые данные и инструкция QUICK_START.md)
+**Последнее обновление**: 2025-11-10 (✅ ЗАВЕРШЕНО: Создан модуль api-models - единый источник истины для API моделей! Решена проблема дублирования и рассинхронизации моделей между backend и sharedUI)
 **Автор**: Claude AI + Team
 

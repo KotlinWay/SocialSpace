@@ -1,6 +1,6 @@
 package info.javaway.sc.backend.routes
 
-import info.javaway.sc.backend.models.*
+import info.javaway.sc.api.models.*
 import info.javaway.sc.backend.services.AuthResult
 import info.javaway.sc.backend.services.AuthService
 import io.ktor.http.*
