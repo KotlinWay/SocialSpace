@@ -1,13 +1,16 @@
 package info.javaway.sc.shared.presentation.screens.home
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.domain.models.User
 import info.javaway.sc.shared.domain.repository.AuthRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
@@ -17,53 +20,72 @@ class HomeViewModel(
     private val authRepository: AuthRepository,
     private val tokenManager: TokenManager
 ) {
-    private val _user = MutableStateFlow<User?>(null)
-    val user = _user.asStateFlow()
+    private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading = _isLoading.asStateFlow()
+    // Единое состояние экрана
+    var state by mutableStateOf<HomeState>(HomeState.Loading)
+        private set
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error = _error.asStateFlow()
-
-    private val _isLoggedOut = MutableStateFlow(false)
-    val isLoggedOut = _isLoggedOut.asStateFlow()
-
-    private val viewModelScope = CoroutineScope(Dispatchers.Main)
+    // Флаг выхода из системы (отдельно от основного состояния)
+    var isLoggedOut by mutableStateOf(false)
+        private set
 
     init {
         loadCurrentUser()
     }
 
     private fun loadCurrentUser() {
-        _isLoading.value = true
-        _error.value = null
+        state = HomeState.Loading
 
         viewModelScope.launch {
-            println("🔍 HomeViewModel: Starting loadCurrentUser")
-            println("🔍 Token: ${tokenManager.getToken()}")
+            Napier.d { "HomeViewModel: Starting loadCurrentUser" }
+            Napier.d { "Token: ${tokenManager.getToken()}" }
 
             authRepository.getCurrentUser()
                 .onSuccess { user ->
-                    println("✅ User loaded successfully: $user")
-                    _isLoading.value = false
-                    _user.value = user
+                    Napier.d { "User loaded successfully: $user" }
+                    state = HomeState.Success(user)
                 }
                 .onFailure { error ->
-                    println("❌ Error loading user: ${error.message}")
-                    Napier.e { error.message ?: "Unknown error" }
-                    _isLoading.value = false
-                    _error.value = error.message ?: "Неизвестная ошибка"
+                    Napier.e(error) { "Error loading user: ${error.message}" }
+                    state = HomeState.Error(error.message ?: "Неизвестная ошибка")
                 }
         }
     }
 
     fun logout() {
         tokenManager.clear()
-        _isLoggedOut.value = true
+        isLoggedOut = true
     }
 
     fun retry() {
         loadCurrentUser()
     }
+
+    /**
+     * Очистка ресурсов
+     */
+    fun onCleared() {
+        viewModelScope.cancel()
+    }
+}
+
+/**
+ * Состояния главного экрана
+ */
+sealed interface HomeState {
+    /**
+     * Загрузка профиля пользователя
+     */
+    data object Loading : HomeState
+
+    /**
+     * Профиль успешно загружен
+     */
+    data class Success(val user: User) : HomeState
+
+    /**
+     * Ошибка загрузки профиля
+     */
+    data class Error(val message: String) : HomeState
 }
