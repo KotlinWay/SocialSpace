@@ -8,6 +8,32 @@ API_URL="http://localhost:8080"
 echo "🚀 Добавление тестовых данных в SocialSpace..."
 echo ""
 
+# Функция для извлечения токена из JSON
+extract_token() {
+    local response="$1"
+
+    # Пробуем использовать jq, если доступен
+    if command -v jq &> /dev/null; then
+        echo "$response" | jq -r '.token // empty'
+    else
+        # Fallback: используем sed для парсинга
+        echo "$response" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p'
+    fi
+}
+
+# Функция для проверки успешности операции
+check_response() {
+    local response="$1"
+    local operation="$2"
+
+    if echo "$response" | grep -q '"error"'; then
+        echo "❌ Ошибка при $operation:"
+        echo "$response"
+        return 1
+    fi
+    return 0
+}
+
 # 1. Регистрация тестового пользователя 1
 echo "📝 Регистрация пользователя 1..."
 USER1_RESPONSE=$(curl -s -X POST "$API_URL/api/auth/register" \
@@ -19,8 +45,28 @@ USER1_RESPONSE=$(curl -s -X POST "$API_URL/api/auth/register" \
     "password": "password123"
   }')
 
-USER1_TOKEN=$(echo $USER1_RESPONSE | grep -o '"token":"[^"]*' | sed 's/"token":"//')
+echo "   Ответ API: $USER1_RESPONSE"
+
+if ! check_response "$USER1_RESPONSE" "регистрации пользователя 1"; then
+    echo "⚠️  Возможно, пользователь уже существует. Пробуем войти..."
+    USER1_RESPONSE=$(curl -s -X POST "$API_URL/api/auth/login" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "phone": "+79991234567",
+        "password": "password123"
+      }')
+    echo "   Ответ API (login): $USER1_RESPONSE"
+fi
+
+USER1_TOKEN=$(extract_token "$USER1_RESPONSE")
+
+if [ -z "$USER1_TOKEN" ]; then
+    echo "❌ Не удалось получить токен для пользователя 1"
+    exit 1
+fi
+
 echo "✅ Пользователь 1 зарегистрирован. Token: ${USER1_TOKEN:0:20}..."
+echo "   Полный токен: $USER1_TOKEN"
 echo ""
 
 # 2. Регистрация тестового пользователя 2
@@ -34,15 +80,37 @@ USER2_RESPONSE=$(curl -s -X POST "$API_URL/api/auth/register" \
     "password": "password123"
   }')
 
-USER2_TOKEN=$(echo $USER2_RESPONSE | grep -o '"token":"[^"]*' | sed 's/"token":"//')
+echo "   Ответ API: $USER2_RESPONSE"
+
+if ! check_response "$USER2_RESPONSE" "регистрации пользователя 2"; then
+    echo "⚠️  Возможно, пользователь уже существует. Пробуем войти..."
+    USER2_RESPONSE=$(curl -s -X POST "$API_URL/api/auth/login" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "phone": "+79997654321",
+        "password": "password123"
+      }')
+    echo "   Ответ API (login): $USER2_RESPONSE"
+fi
+
+USER2_TOKEN=$(extract_token "$USER2_RESPONSE")
+
+if [ -z "$USER2_TOKEN" ]; then
+    echo "❌ Не удалось получить токен для пользователя 2"
+    exit 1
+fi
+
 echo "✅ Пользователь 2 зарегистрирован. Token: ${USER2_TOKEN:0:20}..."
+echo "   Полный токен: $USER2_TOKEN"
 echo ""
 
 # 3. Создание товаров для пользователя 1
 echo "📦 Создание товаров для пользователя 1..."
+echo ""
 
 # Товар 1 - Диван
-curl -s -X POST "$API_URL/api/products" \
+echo "   Создание товара 1: Диван угловой..."
+PRODUCT1_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $USER1_TOKEN" \
   -d '{
@@ -52,11 +120,17 @@ curl -s -X POST "$API_URL/api/products" \
     "categoryId": 1,
     "condition": "USED",
     "images": ["https://via.placeholder.com/400x300?text=Диван"]
-  }' > /dev/null
-echo "✅ Товар 1 создан: Диван угловой"
+  }')
+
+if check_response "$PRODUCT1_RESPONSE" "создании товара 1"; then
+    echo "✅ Товар 1 создан: Диван угловой"
+else
+    echo "   Ответ API: $PRODUCT1_RESPONSE"
+fi
 
 # Товар 2 - Ноутбук
-curl -s -X POST "$API_URL/api/products" \
+echo "   Создание товара 2: Ноутбук Dell XPS 15..."
+PRODUCT2_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $USER1_TOKEN" \
   -d '{
@@ -66,11 +140,17 @@ curl -s -X POST "$API_URL/api/products" \
     "categoryId": 2,
     "condition": "USED",
     "images": ["https://via.placeholder.com/400x300?text=Ноутбук"]
-  }' > /dev/null
-echo "✅ Товар 2 создан: Ноутбук Dell XPS 15"
+  }')
+
+if check_response "$PRODUCT2_RESPONSE" "создании товара 2"; then
+    echo "✅ Товар 2 создан: Ноутбук Dell XPS 15"
+else
+    echo "   Ответ API: $PRODUCT2_RESPONSE"
+fi
 
 # Товар 3 - Велосипед
-curl -s -X POST "$API_URL/api/products" \
+echo "   Создание товара 3: Горный велосипед..."
+PRODUCT3_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $USER1_TOKEN" \
   -d '{
@@ -80,15 +160,22 @@ curl -s -X POST "$API_URL/api/products" \
     "categoryId": 7,
     "condition": "USED",
     "images": ["https://via.placeholder.com/400x300?text=Велосипед"]
-  }' > /dev/null
-echo "✅ Товар 3 создан: Горный велосипед"
+  }')
+
+if check_response "$PRODUCT3_RESPONSE" "создании товара 3"; then
+    echo "✅ Товар 3 создан: Горный велосипед"
+else
+    echo "   Ответ API: $PRODUCT3_RESPONSE"
+fi
 
 # 4. Создание товаров для пользователя 2
 echo ""
 echo "📦 Создание товаров для пользователя 2..."
+echo ""
 
 # Товар 4 - Холодильник
-curl -s -X POST "$API_URL/api/products" \
+echo "   Создание товара 4: Холодильник LG..."
+PRODUCT4_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $USER2_TOKEN" \
   -d '{
@@ -98,11 +185,17 @@ curl -s -X POST "$API_URL/api/products" \
     "categoryId": 5,
     "condition": "USED",
     "images": ["https://via.placeholder.com/400x300?text=Холодильник"]
-  }' > /dev/null
-echo "✅ Товар 4 создан: Холодильник LG"
+  }')
+
+if check_response "$PRODUCT4_RESPONSE" "создании товара 4"; then
+    echo "✅ Товар 4 создан: Холодильник LG"
+else
+    echo "   Ответ API: $PRODUCT4_RESPONSE"
+fi
 
 # Товар 5 - Детская коляска
-curl -s -X POST "$API_URL/api/products" \
+echo "   Создание товара 5: Детская коляска 3 в 1..."
+PRODUCT5_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $USER2_TOKEN" \
   -d '{
@@ -112,11 +205,17 @@ curl -s -X POST "$API_URL/api/products" \
     "categoryId": 3,
     "condition": "USED",
     "images": ["https://via.placeholder.com/400x300?text=Коляска"]
-  }' > /dev/null
-echo "✅ Товар 5 создан: Детская коляска 3 в 1"
+  }')
+
+if check_response "$PRODUCT5_RESPONSE" "создании товара 5"; then
+    echo "✅ Товар 5 создан: Детская коляска 3 в 1"
+else
+    echo "   Ответ API: $PRODUCT5_RESPONSE"
+fi
 
 # Товар 6 - IPhone
-curl -s -X POST "$API_URL/api/products" \
+echo "   Создание товара 6: iPhone 13 Pro 128GB..."
+PRODUCT6_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $USER2_TOKEN" \
   -d '{
@@ -126,15 +225,23 @@ curl -s -X POST "$API_URL/api/products" \
     "categoryId": 2,
     "condition": "USED",
     "images": ["https://via.placeholder.com/400x300?text=iPhone"]
-  }' > /dev/null
-echo "✅ Товар 6 создан: iPhone 13 Pro"
+  }')
+
+if check_response "$PRODUCT6_RESPONSE" "создании товара 6"; then
+    echo "✅ Товар 6 создан: iPhone 13 Pro"
+else
+    echo "   Ответ API: $PRODUCT6_RESPONSE"
+fi
 
 echo ""
 echo "🎉 Тестовые данные успешно добавлены!"
 echo ""
+
+# Проверяем, сколько товаров в базе
+PRODUCTS_COUNT=$(curl -s "$API_URL/api/products?page=1&pageSize=100" | grep -o '"total":[0-9]*' | sed 's/"total"://')
 echo "📊 Итого:"
 echo "   - 2 пользователя"
-echo "   - 6 товаров"
+echo "   - $PRODUCTS_COUNT товаров в базе данных"
 echo ""
 echo "Логин пользователя 1:"
 echo "   Телефон: +79991234567"
