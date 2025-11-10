@@ -3,9 +3,7 @@ package info.javaway.sc.shared.presentation.screens.products
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import info.javaway.sc.shared.domain.models.ProductListResponse
 import info.javaway.sc.shared.domain.models.ProductResponse
-import info.javaway.sc.shared.domain.models.Result
 import info.javaway.sc.shared.domain.repository.ProductRepository
 import io.github.aakira.napier.Napier.e
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +20,7 @@ class ProductListViewModel(
 ) {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    var state by mutableStateOf<ProductListState>(ProductListState.Loading)
+    var state by mutableStateOf<ProductListState>(ProductListState.Empty)
         private set
 
     var isRefreshing by mutableStateOf(false)
@@ -50,24 +48,22 @@ class ProductListViewModel(
         hasMorePages = true
 
         viewModelScope.launch {
-            when (val result = productRepository.getProducts(page = currentPage, pageSize = pageSize)) {
-                is Result.Success -> {
-                    if (result.data.products.isEmpty()) {
-                        state = ProductListState.Empty
-                    } else {
-                        hasMorePages = currentPage < result.data.totalPages
-                        state = ProductListState.Success(
-                            products = result.data.products,
-                            hasMore = hasMorePages
-                        )
-                    }
-                }
-                is Result.Error -> {
-                    e("ProductListViewModel", "Ошибка загрузки товаров: ${result.message}")
-                    state = ProductListState.Error(
-                        message = result.message ?: "Ошибка загрузки товаров"
+            val result = productRepository.getProducts(page = currentPage, pageSize = pageSize)
+            result.onSuccess { productList ->
+                if (productList.products.isEmpty()) {
+                    state = ProductListState.Empty
+                } else {
+                    hasMorePages = currentPage < productList.totalPages
+                    state = ProductListState.Success(
+                        products = productList.products,
+                        hasMore = hasMorePages
                     )
                 }
+            }.onFailure { exception ->
+                e(exception, tag = "ProductListViewModel") { "Ошибка загрузки товаров" }
+                state = ProductListState.Error(
+                    message = exception.message ?: "Ошибка загрузки товаров"
+                )
             }
         }
     }
@@ -81,24 +77,22 @@ class ProductListViewModel(
         hasMorePages = true
 
         viewModelScope.launch {
-            when (val result = productRepository.getProducts(page = currentPage, pageSize = pageSize)) {
-                is Result.Success -> {
-                    if (result.data.products.isEmpty()) {
-                        state = ProductListState.Empty
-                    } else {
-                        hasMorePages = currentPage < result.data.totalPages
-                        state = ProductListState.Success(
-                            products = result.data.products,
-                            hasMore = hasMorePages
-                        )
-                    }
-                }
-                is Result.Error -> {
-                    e("ProductListViewModel", "Ошибка обновления товаров: ${result.message}")
-                    state = ProductListState.Error(
-                        message = result.message ?: "Ошибка обновления товаров"
+            val result = productRepository.getProducts(page = currentPage, pageSize = pageSize)
+            result.onSuccess { productList ->
+                if (productList.products.isEmpty()) {
+                    state = ProductListState.Empty
+                } else {
+                    hasMorePages = currentPage < productList.totalPages
+                    state = ProductListState.Success(
+                        products = productList.products,
+                        hasMore = hasMorePages
                     )
                 }
+            }.onFailure { exception ->
+                e(exception, tag = "ProductListViewModel") { "Ошибка обновления товаров" }
+                state = ProductListState.Error(
+                    message = exception.message ?: "Ошибка обновления товаров"
+                )
             }
             isRefreshing = false
         }
@@ -118,23 +112,21 @@ class ProductListViewModel(
 
         viewModelScope.launch {
             val nextPage = currentPage + 1
-            when (val result = productRepository.getProducts(page = nextPage, pageSize = pageSize)) {
-                is Result.Success -> {
-                    currentPage = nextPage
-                    hasMorePages = currentPage < result.data.totalPages
+            val result = productRepository.getProducts(page = nextPage, pageSize = pageSize)
+            result.onSuccess { productList ->
+                currentPage = nextPage
+                hasMorePages = currentPage < productList.totalPages
 
-                    // Добавляем новые товары к существующим
-                    state = ProductListState.Success(
-                        products = currentState.products + result.data.products,
-                        hasMore = hasMorePages,
-                        isLoadingMore = false
-                    )
-                }
-                is Result.Error -> {
-                    e("ProductListViewModel", "Ошибка загрузки следующей страницы: ${result.message}")
-                    // При ошибке загрузки страницы возвращаем предыдущее состояние
-                    state = currentState.copy(isLoadingMore = false)
-                }
+                // Добавляем новые товары к существующим
+                state = ProductListState.Success(
+                    products = currentState.products + productList.products,
+                    hasMore = hasMorePages,
+                    isLoadingMore = false
+                )
+            }.onFailure { exception ->
+                e(exception, tag = "ProductListViewModel") { "Ошибка загрузки следующей страницы" }
+                // При ошибке загрузки страницы возвращаем предыдущее состояние
+                state = currentState.copy(isLoadingMore = false)
             }
         }
     }
