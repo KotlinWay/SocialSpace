@@ -5,9 +5,9 @@ import com.auth0.jwt.algorithms.Algorithm
 import java.util.*
 
 object JwtConfig {
-    private const val SECRET = "your-secret-key-change-in-production"
-    private const val ISSUER = "http://0.0.0.0:8080"
-    private const val AUDIENCE = "http://0.0.0.0:8080"
+    const val SECRET = "secret-key-change-in-production"
+    const val ISSUER = "http://0.0.0.0:8080"
+    const val AUDIENCE = "http://0.0.0.0:8080"
     private const val VALIDITY_IN_MS = 36_000_00 * 24 * 7 // 7 days
 
     fun makeToken(userId: Long): String = JWT.create()

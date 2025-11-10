@@ -1,6 +1,7 @@
 package info.javaway.sc.shared.data.api
 
 import info.javaway.sc.shared.domain.models.*
+import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -32,18 +33,17 @@ class ApiClient(
 
         install(Logging) {
             logger = Logger.DEFAULT
-            level = LogLevel.INFO
+            level = LogLevel.ALL
         }
 
         install(DefaultRequest) {
             url(baseUrl)
             contentType(ContentType.Application.Json)
-        }
-    }.apply {
-        // Добавляем токен при каждом запросе через pipeline interceptor
-        requestPipeline.intercept(HttpRequestPipeline.State) {
-            tokenProvider()?.let { token ->
-                context.headers.append(HttpHeaders.Authorization, "Bearer $token")
+            headers {
+                Napier.e("token: 🦄 ${tokenProvider()}")
+                tokenProvider()?.let { token ->
+                    append(HttpHeaders.Authorization, "Bearer $token")
+                }
             }
         }
     }
@@ -176,17 +176,26 @@ class ApiClient(
             Result.Success(block())
         } catch (e: ClientRequestException) {
             // 4xx errors
+            println("❌ ClientRequestException: ${e.response.status}")
+            println("   URL: ${e.response.call.request.url}")
+            println("   Headers: ${e.response.call.request.headers.entries()}")
             try {
                 val errorResponse: ErrorResponse = e.response.body()
+                println("   Error body: $errorResponse")
                 Result.Error(errorResponse.message, errorResponse.code)
             } catch (parseError: Exception) {
+                println("   Failed to parse error body: ${parseError.message}")
                 Result.Error("Ошибка клиента: ${e.response.status.description}")
             }
         } catch (e: ServerResponseException) {
             // 5xx errors
+            println("❌ ServerResponseException: ${e.response.status}")
+            println("   URL: ${e.response.call.request.url}")
             Result.Error("Ошибка сервера: ${e.response.status.description}")
         } catch (e: Exception) {
             // Network or other errors
+            println("❌ Exception: ${e.message}")
+            e.printStackTrace()
             Result.Error(e.message ?: "Неизвестная ошибка")
         }
     }
