@@ -95,8 +95,9 @@ data class UserPublicInfo(
     val id: Long,
     val name: String,
     val avatar: String?,
+    val phone: String,
     val rating: Double?,
-    val isVerified: Boolean
+    val isVerified: Boolean = false
 )
 
 @Serializable
