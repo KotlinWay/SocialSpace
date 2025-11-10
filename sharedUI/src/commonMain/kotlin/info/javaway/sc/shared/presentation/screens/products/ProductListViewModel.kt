@@ -3,11 +3,8 @@ package info.javaway.sc.shared.presentation.screens.products
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import info.javaway.sc.shared.domain.models.ProductListResponse
 import info.javaway.sc.shared.domain.models.ProductResponse
-import info.javaway.sc.shared.domain.models.Result
 import info.javaway.sc.shared.domain.repository.ProductRepository
-import io.github.aakira.napier.Napier.e
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -50,24 +47,22 @@ class ProductListViewModel(
         hasMorePages = true
 
         viewModelScope.launch {
-            try {
-                val response = productRepository.getProducts(
-                    page = currentPage,
-                    pageSize = pageSize
-                ) as? Result.Success<ProductListResponse> ?: error("Ошибка загрузки товаров")
-
-                if (response.data.products.isEmpty()) {
+            productRepository.getProducts(
+                page = currentPage,
+                pageSize = pageSize
+            ).onSuccess { response ->
+                if (response.products.isEmpty()) {
                     state = ProductListState.Empty
                 } else {
-                    hasMorePages = currentPage < response.data.totalPages
+                    hasMorePages = currentPage < response.totalPages
                     state = ProductListState.Success(
-                        products = response.data.products,
+                        products = response.products,
                         hasMore = hasMorePages
                     )
                 }
-            } catch (e: Exception) {
+            }.onFailure { error ->
                 state = ProductListState.Error(
-                    message = e.message ?: "Ошибка загрузки товаров"
+                    message = error.message ?: "Ошибка загрузки товаров"
                 )
             }
         }
@@ -82,28 +77,25 @@ class ProductListViewModel(
         hasMorePages = true
 
         viewModelScope.launch {
-            try {
-                val response = productRepository.getProducts(
-                    page = currentPage,
-                    pageSize = pageSize
-                ) as? Result.Success<ProductListResponse> ?: error("Ошибка загрузки товаров")
-
-                if (response.data.products.isEmpty()) {
+            productRepository.getProducts(
+                page = currentPage,
+                pageSize = pageSize
+            ).onSuccess { response ->
+                if (response.products.isEmpty()) {
                     state = ProductListState.Empty
                 } else {
-                    hasMorePages = currentPage < response.data.totalPages
+                    hasMorePages = currentPage < response.totalPages
                     state = ProductListState.Success(
-                        products = response.data.products,
+                        products = response.products,
                         hasMore = hasMorePages
                     )
                 }
-            } catch (e: Exception) {
+            }.onFailure { error ->
                 state = ProductListState.Error(
-                    message = e.message ?: "Ошибка обновления товаров"
+                    message = error.message ?: "Ошибка обновления товаров"
                 )
-            } finally {
-                isRefreshing = false
             }
+            isRefreshing = false
         }
     }
 
@@ -120,23 +112,21 @@ class ProductListViewModel(
         state = currentState.copy(isLoadingMore = true)
 
         viewModelScope.launch {
-            try {
-                val nextPage = currentPage + 1
-                val response = productRepository.getProducts(
-                    page = nextPage,
-                    pageSize = pageSize
-                ) as? Result.Success<ProductListResponse> ?: error("Ошибка загрузки товаров")
-
+            val nextPage = currentPage + 1
+            productRepository.getProducts(
+                page = nextPage,
+                pageSize = pageSize
+            ).onSuccess { response ->
                 currentPage = nextPage
-                hasMorePages = currentPage < response.data.totalPages
+                hasMorePages = currentPage < response.totalPages
 
                 // Добавляем новые товары к существующим
                 state = ProductListState.Success(
-                    products = currentState.products + response.data.products,
+                    products = currentState.products + response.products,
                     hasMore = hasMorePages,
                     isLoadingMore = false
                 )
-            } catch (e: Exception) {
+            }.onFailure {
                 // При ошибке загрузки страницы возвращаем предыдущее состояние
                 state = currentState.copy(isLoadingMore = false)
             }

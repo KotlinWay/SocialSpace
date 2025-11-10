@@ -17,7 +17,7 @@ class ServiceRepositoryImpl(
         search: String?,
         page: Int,
         pageSize: Int
-    ): Result<ServiceListResponse> {
+    ): kotlin.Result<ServiceListResponse> {
         return apiClient.getServices(
             categoryId = categoryId,
             status = status,
@@ -27,11 +27,11 @@ class ServiceRepositoryImpl(
         )
     }
 
-    override suspend fun getService(serviceId: Long): Result<ServiceResponse> {
+    override suspend fun getService(serviceId: Long): kotlin.Result<ServiceResponse> {
         return apiClient.getService(serviceId)
     }
 
-    override suspend fun getMyServices(): Result<List<ServiceResponse>> {
+    override suspend fun getMyServices(): kotlin.Result<List<ServiceResponse>> {
         return apiClient.getMyServices()
     }
 }

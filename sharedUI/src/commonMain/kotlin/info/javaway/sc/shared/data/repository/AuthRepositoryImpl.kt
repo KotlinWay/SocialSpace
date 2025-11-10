@@ -13,31 +13,23 @@ class AuthRepositoryImpl(
     private val tokenManager: TokenManager
 ) : AuthRepository {
 
-    override suspend fun register(request: RegisterRequest): Result<AuthResponse> {
-        return when (val result = apiClient.register(request)) {
-            is Result.Success -> {
-                tokenManager.saveToken(result.data.token)
-                tokenManager.saveUserId(result.data.user.id)
-                result
+    override suspend fun register(request: RegisterRequest): kotlin.Result<AuthResponse> {
+        return apiClient.register(request)
+            .onSuccess { response ->
+                tokenManager.saveToken(response.token)
+                tokenManager.saveUserId(response.user.id)
             }
-            is Result.Error -> result
-            is Result.Loading -> result
-        }
     }
 
-    override suspend fun login(request: LoginRequest): Result<AuthResponse> {
-        return when (val result = apiClient.login(request)) {
-            is Result.Success -> {
-                tokenManager.saveToken(result.data.token)
-                tokenManager.saveUserId(result.data.user.id)
-                result
+    override suspend fun login(request: LoginRequest): kotlin.Result<AuthResponse> {
+        return apiClient.login(request)
+            .onSuccess { response ->
+                tokenManager.saveToken(response.token)
+                tokenManager.saveUserId(response.user.id)
             }
-            is Result.Error -> result
-            is Result.Loading -> result
-        }
     }
 
-    override suspend fun getCurrentUser(): Result<User> {
+    override suspend fun getCurrentUser(): kotlin.Result<User> {
         return apiClient.getCurrentUser()
     }
 

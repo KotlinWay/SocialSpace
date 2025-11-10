@@ -21,11 +21,14 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinInject(),
     onLogout: () -> Unit = {}
 ) {
-    val state = viewModel.state
+    val user by viewModel.user.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val isLoggedOut by viewModel.isLoggedOut.collectAsState()
 
     // Отслеживание выхода из системы
-    LaunchedEffect(state.isLoggedOut) {
-        if (state.isLoggedOut) {
+    LaunchedEffect(isLoggedOut) {
+        if (isLoggedOut) {
             onLogout()
         }
     }
@@ -57,7 +60,7 @@ fun HomeScreen(
         ) {
             when {
                 // Состояние загрузки
-                state.isLoading -> {
+                isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier
                             .size(48.dp)
@@ -66,7 +69,7 @@ fun HomeScreen(
                 }
 
                 // Ошибка загрузки
-                state.error != null -> {
+                error != null -> {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -81,12 +84,14 @@ fun HomeScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = state.error,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
+                        error?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(onClick = { viewModel.retry() }) {
                             Text("Повторить")
@@ -95,7 +100,7 @@ fun HomeScreen(
                 }
 
                 // Успешная загрузка данных пользователя
-                state.user != null -> {
+                user != null -> {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -121,48 +126,49 @@ fun HomeScreen(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant
                             )
                         ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text(
-                                    text = "Профиль",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // Имя
-                                Row {
+                            user?.let { notNullUser ->
+                                Column(
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
                                     Text(
-                                        text = "Имя: ",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        text = "Профиль",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.primary
                                     )
-                                    Text(
-                                        text = state.user.name,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
+                                    Spacer(modifier = Modifier.height(12.dp))
 
-                                Spacer(modifier = Modifier.height(8.dp))
+                                    // Имя
+                                    Row {
+                                        Text(
+                                            text = "Имя: ",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = notNullUser.name,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
 
-                                // Телефон
-                                Row {
-                                    Text(
-                                        text = "Телефон: ",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = state.user.phone,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
+                                    Spacer(modifier = Modifier.height(8.dp))
 
-                                // Email (если есть)
-                                state.user.email?.let { email ->
+                                    // Телефон
+                                    Row {
+                                        Text(
+                                            text = "Телефон: ",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = notNullUser.phone,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                            }
+
+                                notNullUser.email?.let { email ->
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row {
                                         Text(
@@ -179,7 +185,7 @@ fun HomeScreen(
                                 }
 
                                 // Биография (если есть)
-                                state.user.bio?.let { bio ->
+                                notNullUser.bio?.let { bio ->
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
                                         text = "О себе:",
@@ -194,7 +200,7 @@ fun HomeScreen(
                                 }
 
                                 // Рейтинг (если есть)
-                                state.user.rating?.let { rating ->
+                                notNullUser.rating?.let { rating ->
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row {
                                         Text(

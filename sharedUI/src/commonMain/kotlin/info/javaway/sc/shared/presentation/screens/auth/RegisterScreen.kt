@@ -26,11 +26,18 @@ fun RegisterScreen(
     onRegisterSuccess: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {}
 ) {
-    val state = viewModel.state
+    val phone by viewModel.phone.collectAsState()
+    val name by viewModel.name.collectAsState()
+    val email by viewModel.email.collectAsState()
+    val password by viewModel.password.collectAsState()
+    val confirmPassword by viewModel.confirmPassword.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val isSuccess by viewModel.isSuccess.collectAsState()
 
     // Отслеживание успешной регистрации
-    LaunchedEffect(state.isSuccess) {
-        if (state.isSuccess) {
+    LaunchedEffect(isSuccess) {
+        if (isSuccess) {
             onRegisterSuccess()
         }
     }
@@ -84,49 +91,49 @@ fun RegisterScreen(
 
             // Поле телефона
             OutlinedTextField(
-                value = state.phone,
+                value = phone,
                 onValueChange = { viewModel.onPhoneChange(it) },
                 label = { Text("Номер телефона *") },
                 placeholder = { Text("+79991234567") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                enabled = !state.isLoading
+                enabled = !isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Поле имени
             OutlinedTextField(
-                value = state.name,
+                value = name,
                 onValueChange = { viewModel.onNameChange(it) },
                 label = { Text("Имя *") },
                 placeholder = { Text("Иван Иванов") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                enabled = !state.isLoading
+                enabled = !isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Поле email (опционально)
             OutlinedTextField(
-                value = state.email,
+                value = email,
                 onValueChange = { viewModel.onEmailChange(it) },
                 label = { Text("Email (опционально)") },
                 placeholder = { Text("example@mail.ru") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                enabled = !state.isLoading
+                enabled = !isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Поле пароля
             OutlinedTextField(
-                value = state.password,
+                value = password,
                 onValueChange = { viewModel.onPasswordChange(it) },
                 label = { Text("Пароль *") },
                 placeholder = { Text("Минимум 6 символов") },
@@ -134,14 +141,14 @@ fun RegisterScreen(
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                enabled = !state.isLoading
+                enabled = !isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Поле подтверждения пароля
             OutlinedTextField(
-                value = state.confirmPassword,
+                value = confirmPassword,
                 onValueChange = { viewModel.onConfirmPasswordChange(it) },
                 label = { Text("Подтверждение пароля *") },
                 placeholder = { Text("Повторите пароль") },
@@ -149,15 +156,14 @@ fun RegisterScreen(
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                enabled = !state.isLoading
+                enabled = !isLoading
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Сообщение об ошибке
-            if (state.error != null) {
+            error?.let { error ->
                 Text(
-                    text = state.error,
+                    text = error,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
@@ -172,9 +178,9 @@ fun RegisterScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                enabled = !state.isLoading
+                enabled = !isLoading
             ) {
-                if (state.isLoading) {
+                if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = MaterialTheme.colorScheme.onPrimary
@@ -189,7 +195,7 @@ fun RegisterScreen(
             // Кнопка перехода на вход
             TextButton(
                 onClick = onNavigateToLogin,
-                enabled = !state.isLoading
+                enabled = !isLoading
             ) {
                 Text("Уже есть аккаунт? Войти")
             }

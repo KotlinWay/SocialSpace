@@ -15,11 +15,11 @@ interface ProductRepository {
         search: String? = null,
         page: Int = 1,
         pageSize: Int = 20
-    ): Result<ProductListResponse>
+    ): kotlin.Result<ProductListResponse>
 
-    suspend fun getProduct(productId: Long): Result<ProductResponse>
-    suspend fun getMyProducts(): Result<List<ProductResponse>>
-    suspend fun getFavoriteProducts(page: Int = 1, pageSize: Int = 20): Result<ProductListResponse>
-    suspend fun addToFavorites(productId: Long): Result<SuccessResponse>
-    suspend fun removeFromFavorites(productId: Long): Result<SuccessResponse>
+    suspend fun getProduct(productId: Long): kotlin.Result<ProductResponse>
+    suspend fun getMyProducts(): kotlin.Result<List<ProductResponse>>
+    suspend fun getFavoriteProducts(page: Int = 1, pageSize: Int = 20): kotlin.Result<ProductListResponse>
+    suspend fun addToFavorites(productId: Long): kotlin.Result<SuccessResponse>
+    suspend fun removeFromFavorites(productId: Long): kotlin.Result<SuccessResponse>
 }

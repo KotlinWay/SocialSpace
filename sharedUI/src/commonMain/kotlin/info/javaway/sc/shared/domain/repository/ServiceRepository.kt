@@ -12,8 +12,8 @@ interface ServiceRepository {
         search: String? = null,
         page: Int = 1,
         pageSize: Int = 20
-    ): Result<ServiceListResponse>
+    ): kotlin.Result<ServiceListResponse>
 
-    suspend fun getService(serviceId: Long): Result<ServiceResponse>
-    suspend fun getMyServices(): Result<List<ServiceResponse>>
+    suspend fun getService(serviceId: Long): kotlin.Result<ServiceResponse>
+    suspend fun getMyServices(): kotlin.Result<List<ServiceResponse>>
 }

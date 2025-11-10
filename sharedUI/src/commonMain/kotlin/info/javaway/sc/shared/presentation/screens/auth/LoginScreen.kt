@@ -22,11 +22,15 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
     onNavigateToRegister: () -> Unit = {}
 ) {
-    val state = viewModel.state
+    val phone by viewModel.phone.collectAsState()
+    val password by viewModel.password.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val isSuccess by viewModel.isSuccess.collectAsState()
 
     // Отслеживание успешного входа
-    LaunchedEffect(state.isSuccess) {
-        if (state.isSuccess) {
+    LaunchedEffect(isSuccess) {
+        if (isSuccess) {
             onLoginSuccess()
         }
     }
@@ -69,36 +73,36 @@ fun LoginScreen(
 
             // Поле телефона
             OutlinedTextField(
-                value = state.phone,
+                value = phone,
                 onValueChange = { viewModel.onPhoneChange(it) },
                 label = { Text("Номер телефона") },
                 placeholder = { Text("+79991234567") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                enabled = !state.isLoading
+                enabled = !isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Поле пароля
             OutlinedTextField(
-                value = state.password,
+                value = password,
                 onValueChange = { viewModel.onPasswordChange(it) },
                 label = { Text("Пароль") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                enabled = !state.isLoading
+                enabled = !isLoading
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Сообщение об ошибке
-            if (state.error != null) {
+            error?.run {
                 Text(
-                    text = state.error,
+                    text = this,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
@@ -113,9 +117,9 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                enabled = !state.isLoading
+                enabled = !isLoading
             ) {
-                if (state.isLoading) {
+                if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = MaterialTheme.colorScheme.onPrimary
@@ -130,7 +134,7 @@ fun LoginScreen(
             // Кнопка регистрации
             TextButton(
                 onClick = onNavigateToRegister,
-                enabled = !state.isLoading
+                enabled = !isLoading
             ) {
                 Text("Нет аккаунта? Зарегистрироваться")
             }
