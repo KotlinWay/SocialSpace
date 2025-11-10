@@ -35,5 +35,6 @@ data class UserPublicInfo(
     val name: String,
     val avatar: String?,
     val phone: String,
-    val rating: Double?
+    val rating: Double?,
+    val isVerified: Boolean = false
 )

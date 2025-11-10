@@ -87,25 +87,46 @@ class ProductRepository {
         limit: Int = 20,
         offset: Long = 0
     ): List<Product> = transaction {
+        println("🔍 ProductRepository.getAllProducts() вызван")
+        println("   categoryId=$categoryId, status=$status, condition=$condition")
+        println("   minPrice=$minPrice, maxPrice=$maxPrice, searchQuery=$searchQuery")
+        println("   limit=$limit, offset=$offset")
+
         var query = Products.selectAll()
 
         // Фильтр по категории
-        categoryId?.let { query = query.where { Products.categoryId eq it } }
+        categoryId?.let {
+            println("   ✅ Применяется фильтр по categoryId: $it")
+            query = query.where { Products.categoryId eq it }
+        } ?: println("   ℹ️  Фильтр по categoryId НЕ применяется (categoryId == null) - вернем ВСЕ товары")
 
         // Фильтр по статусу
-        status?.let { query = query.where { Products.status eq it } }
+        status?.let {
+            println("   ✅ Применяется фильтр по status: $it")
+            query = query.where { Products.status eq it }
+        }
 
         // Фильтр по состоянию
-        condition?.let { query = query.where { Products.condition eq it } }
+        condition?.let {
+            println("   ✅ Применяется фильтр по condition: $it")
+            query = query.where { Products.condition eq it }
+        }
 
         // Фильтр по минимальной цене
-        minPrice?.let { query = query.where { Products.price greaterEq it } }
+        minPrice?.let {
+            println("   ✅ Применяется фильтр по minPrice: $it")
+            query = query.where { Products.price greaterEq it }
+        }
 
         // Фильтр по максимальной цене
-        maxPrice?.let { query = query.where { Products.price lessEq it } }
+        maxPrice?.let {
+            println("   ✅ Применяется фильтр по maxPrice: $it")
+            query = query.where { Products.price lessEq it }
+        }
 
         // Поиск по названию и описанию
         searchQuery?.let { search ->
+            println("   ✅ Применяется поиск по запросу: $search")
             val searchPattern = "%${search.lowercase()}%"
             query = query.where {
                 (Products.title.lowerCase() like searchPattern) or
@@ -113,11 +134,15 @@ class ProductRepository {
             }
         }
 
-        query
+        val results = query
             .limit(limit)
             .offset(offset)
             .orderBy(Products.createdAt to SortOrder.DESC)
             .map { rowToProduct(it) }
+
+        println("   📦 Найдено товаров: ${results.size}")
+
+        results
     }
 
     /**
@@ -131,15 +156,35 @@ class ProductRepository {
         maxPrice: Double? = null,
         searchQuery: String? = null
     ): Long = transaction {
+        println("🔢 ProductRepository.countProducts() вызван")
+        println("   categoryId=$categoryId, status=$status, condition=$condition")
+
         var query = Products.selectAll()
 
-        categoryId?.let { query = query.where { Products.categoryId eq it } }
-        status?.let { query = query.where { Products.status eq it } }
-        condition?.let { query = query.where { Products.condition eq it } }
-        minPrice?.let { query = query.where { Products.price greaterEq it } }
-        maxPrice?.let { query = query.where { Products.price lessEq it } }
+        categoryId?.let {
+            println("   ✅ Применяется фильтр по categoryId: $it")
+            query = query.where { Products.categoryId eq it }
+        } ?: println("   ℹ️  Фильтр по categoryId НЕ применяется (categoryId == null)")
+
+        status?.let {
+            println("   ✅ Применяется фильтр по status: $it")
+            query = query.where { Products.status eq it }
+        }
+        condition?.let {
+            println("   ✅ Применяется фильтр по condition: $it")
+            query = query.where { Products.condition eq it }
+        }
+        minPrice?.let {
+            println("   ✅ Применяется фильтр по minPrice: $it")
+            query = query.where { Products.price greaterEq it }
+        }
+        maxPrice?.let {
+            println("   ✅ Применяется фильтр по maxPrice: $it")
+            query = query.where { Products.price lessEq it }
+        }
 
         searchQuery?.let { search ->
+            println("   ✅ Применяется поиск по запросу: $search")
             val searchPattern = "%${search.lowercase()}%"
             query = query.where {
                 (Products.title.lowerCase() like searchPattern) or
@@ -147,7 +192,10 @@ class ProductRepository {
             }
         }
 
-        query.count()
+        val count = query.count()
+        println("   📊 Всего товаров (с учетом фильтров): $count")
+
+        count
     }
 
     /**

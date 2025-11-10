@@ -152,6 +152,7 @@ fun Route.serviceRoutes(
                         id = user.id,
                         name = user.name,
                         avatar = user.avatar,
+                        phone = user.phone,
                         rating = user.rating,
                         isVerified = user.isVerified
                     ),

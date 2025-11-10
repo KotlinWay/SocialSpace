@@ -40,6 +40,9 @@ fun Route.productRoutes(
          */
         get {
             try {
+                println("🌐 GET /api/products - Получен запрос")
+                println("   Query parameters: ${call.request.queryParameters}")
+
                 val categoryId = call.request.queryParameters["categoryId"]?.toLongOrNull()
                 val statusStr = call.request.queryParameters["status"]
                 val conditionStr = call.request.queryParameters["condition"]
@@ -48,6 +51,16 @@ fun Route.productRoutes(
                 val searchQuery = call.request.queryParameters["search"]
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
                 val pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull()?.coerceIn(1, 100) ?: 20
+
+                println("   Распарсены параметры:")
+                println("   - categoryId: $categoryId")
+                println("   - status: $statusStr")
+                println("   - condition: $conditionStr")
+                println("   - minPrice: $minPrice")
+                println("   - maxPrice: $maxPrice")
+                println("   - search: $searchQuery")
+                println("   - page: $page")
+                println("   - pageSize: $pageSize")
 
                 // Валидация page
                 if (page < 1) {
@@ -77,6 +90,7 @@ fun Route.productRoutes(
 
                 val offset = ((page - 1) * pageSize).toLong()
 
+                println("   📞 Вызов productRepository.getAllProducts()...")
                 // Получаем товары и их количество
                 val products = productRepository.getAllProducts(
                     categoryId = categoryId,
@@ -89,6 +103,7 @@ fun Route.productRoutes(
                     offset = offset
                 )
 
+                println("   📞 Вызов productRepository.countProducts()...")
                 val total = productRepository.countProducts(
                     categoryId = categoryId,
                     status = status,
@@ -100,14 +115,70 @@ fun Route.productRoutes(
 
                 val totalPages = ceil(total.toDouble() / pageSize).toInt()
 
+                // Получаем ID текущего пользователя (если авторизован)
+                val principal = call.principal<JWTPrincipal>()
+                val currentUserId = principal?.payload?.getClaim("userId")?.asLong()
+
+                println("   🔄 Формирование расширенных данных для ${products.size} товаров...")
+
+                // Формируем расширенные данные для каждого товара
+                val productListItems = products.mapNotNull { product ->
+                    // Загружаем пользователя
+                    val user = userRepository.findById(product.userId)
+                    if (user == null) {
+                        println("   ⚠️  Пользователь ${product.userId} не найден для товара ${product.id}")
+                        return@mapNotNull null
+                    }
+
+                    // Загружаем категорию
+                    val category = categoryRepository.findById(product.categoryId)
+                    if (category == null) {
+                        println("   ⚠️  Категория ${product.categoryId} не найдена для товара ${product.id}")
+                        return@mapNotNull null
+                    }
+
+                    // Проверяем, в избранном ли товар
+                    val isFavorite = currentUserId?.let {
+                        productRepository.isFavorite(it, product.id)
+                    } ?: false
+
+                    ProductListItem(
+                        id = product.id,
+                        title = product.title,
+                        description = product.description,
+                        price = product.price,
+                        condition = product.condition,
+                        images = product.images,
+                        status = product.status,
+                        views = product.views,
+                        createdAt = product.createdAt,
+                        updatedAt = product.updatedAt,
+                        user = UserPublicInfo(
+                            id = user.id,
+                            name = user.name,
+                            avatar = user.avatar,
+                            phone = user.phone,
+                            rating = user.rating,
+                            isVerified = user.isVerified
+                        ),
+                        category = CategoryInfo(
+                            id = category.id,
+                            name = category.name,
+                            icon = category.icon
+                        ),
+                        isFavorite = isFavorite
+                    )
+                }
+
                 val response = ProductListResponse(
-                    products = products,
+                    products = productListItems,
                     total = total,
                     page = page,
                     pageSize = pageSize,
                     totalPages = totalPages
                 )
 
+                println("   ✅ Ответ сформирован: products.size=${productListItems.size}, total=$total, totalPages=$totalPages")
                 call.respond(HttpStatusCode.OK, response)
             } catch (e: Exception) {
                 call.application.log.error("Get products error", e)
@@ -177,6 +248,7 @@ fun Route.productRoutes(
                         id = user.id,
                         name = user.name,
                         avatar = user.avatar,
+                        phone = user.phone,
                         rating = user.rating,
                         isVerified = user.isVerified
                     ),
@@ -619,8 +691,50 @@ fun Route.productRoutes(
                     val total = productRepository.countFavorites(userId)
                     val totalPages = ceil(total.toDouble() / pageSize).toInt()
 
+                    // Формируем расширенные данные для каждого избранного товара
+                    val favoriteListItems = favorites.mapNotNull { product ->
+                        // Загружаем пользователя
+                        val user = userRepository.findById(product.userId)
+                        if (user == null) {
+                            return@mapNotNull null
+                        }
+
+                        // Загружаем категорию
+                        val category = categoryRepository.findById(product.categoryId)
+                        if (category == null) {
+                            return@mapNotNull null
+                        }
+
+                        ProductListItem(
+                            id = product.id,
+                            title = product.title,
+                            description = product.description,
+                            price = product.price,
+                            condition = product.condition,
+                            images = product.images,
+                            status = product.status,
+                            views = product.views,
+                            createdAt = product.createdAt,
+                            updatedAt = product.updatedAt,
+                            user = UserPublicInfo(
+                                id = user.id,
+                                name = user.name,
+                                avatar = user.avatar,
+                                phone = user.phone,
+                                rating = user.rating,
+                                isVerified = user.isVerified
+                            ),
+                            category = CategoryInfo(
+                                id = category.id,
+                                name = category.name,
+                                icon = category.icon
+                            ),
+                            isFavorite = true  // Все товары в этом списке - избранные
+                        )
+                    }
+
                     val response = ProductListResponse(
-                        products = favorites,
+                        products = favoriteListItems,
                         total = total,
                         page = page,
                         pageSize = pageSize,
