@@ -51,7 +51,7 @@ class ProductDetailViewModel(
                         null
                     }
 
-                    val isOwner = currentUserId != null && currentUserId == product.userId
+                    val isOwner = currentUserId != null && currentUserId == product.user.id
 
                     state = ProductDetailState.Success(
                         product = product,

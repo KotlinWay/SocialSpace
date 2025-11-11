@@ -44,7 +44,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
+import coil3.ImageLoader
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import info.javaway.sc.shared.domain.models.Product
 import info.javaway.sc.shared.domain.models.ProductCondition
 import org.koin.compose.koinInject
@@ -217,6 +221,7 @@ private fun ProductDetailContent(
 @Composable
 private fun ImageGallery(images: List<String>) {
     val pagerState = rememberPagerState(pageCount = { images.size })
+    val context = LocalPlatformContext.current
 
     Box(
         modifier = Modifier
@@ -227,29 +232,17 @@ private fun ImageGallery(images: List<String>) {
             state = pagerState,
             modifier = Modifier.fillMaxSize()
         ) { page ->
-            SubcomposeAsyncImage(
-                model = images[page],
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(images[page])
+                    .crossfade(true)
+                    .build(),
+                imageLoader = ImageLoader.Builder(context)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = "Изображение товара ${page + 1}",
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-                loading = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                },
-                error = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Ошибка загрузки")
-                    }
-                }
+                contentScale = ContentScale.Crop
             )
         }
 
@@ -285,7 +278,7 @@ private fun ImageGallery(images: List<String>) {
  */
 @Composable
 private fun SellerCard(
-    seller: info.javaway.sc.api.models.UserPublicInfo,
+    seller: info.javaway.sc.shared.domain.models.UserPublicInfo,
     onCallSeller: (String) -> Unit
 ) {
     Card(
