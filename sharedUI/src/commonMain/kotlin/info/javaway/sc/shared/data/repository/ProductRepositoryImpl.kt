@@ -1,13 +1,19 @@
 package info.javaway.sc.shared.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import info.javaway.sc.shared.data.api.ApiClient
 import info.javaway.sc.shared.data.mappers.toDomain
+import info.javaway.sc.shared.data.paging.ProductFilters
+import info.javaway.sc.shared.data.paging.ProductPagingSource
 import info.javaway.sc.shared.domain.models.Product
 import info.javaway.sc.shared.domain.models.ProductCondition
 import info.javaway.sc.shared.domain.models.ProductStatus
 import info.javaway.sc.shared.domain.repository.ProductRepository
 import info.javaway.sc.api.models.ProductCondition as ApiProductCondition
 import info.javaway.sc.api.models.ProductStatus as ApiProductStatus
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Реализация репозитория товаров
@@ -16,6 +22,40 @@ import info.javaway.sc.api.models.ProductStatus as ApiProductStatus
 class ProductRepositoryImpl(
     private val apiClient: ApiClient
 ) : ProductRepository {
+
+    /**
+     * Получить список товаров с пагинацией через Paging 3
+     */
+    override fun getProductsPaged(
+        categoryId: Long?,
+        status: ProductStatus?,
+        condition: ProductCondition?,
+        minPrice: Double?,
+        maxPrice: Double?,
+        search: String?
+    ): Flow<PagingData<Product>> {
+        val filters = ProductFilters(
+            categoryId = categoryId,
+            status = status,
+            condition = condition,
+            minPrice = minPrice,
+            maxPrice = maxPrice,
+            search = search
+        )
+
+        return Pager(
+            config = PagingConfig(
+                pageSize = 20, // Размер страницы
+                enablePlaceholders = false, // Не показывать placeholder'ы
+                initialLoadSize = 20, // Размер первой загрузки
+                prefetchDistance = 5, // Количество элементов до конца для предзагрузки
+                maxSize = PagingConfig.MAX_SIZE_UNBOUNDED // Без ограничения размера кэша
+            ),
+            pagingSourceFactory = {
+                ProductPagingSource(apiClient, filters)
+            }
+        ).flow
+    }
 
     override suspend fun getProducts(
         categoryId: Long?,
