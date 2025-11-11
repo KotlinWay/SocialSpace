@@ -38,15 +38,15 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import info.javaway.sc.shared.domain.models.Product
 import info.javaway.sc.shared.domain.models.ProductCondition
-import info.javaway.sc.shared.domain.models.ProductResponse
 
 /**
  * Карточка товара для списка
  */
 @Composable
 fun ProductCard(
-    product: ProductResponse,
+    product: Product,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {

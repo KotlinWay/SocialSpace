@@ -1,6 +1,6 @@
 package info.javaway.sc.backend.routes
 
-import info.javaway.sc.backend.models.*
+import info.javaway.sc.api.models.*
 import info.javaway.sc.backend.repository.UserRepository
 import info.javaway.sc.backend.services.AuthService
 import info.javaway.sc.backend.services.UpdateResult

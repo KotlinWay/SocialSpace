@@ -1,8 +1,8 @@
 package info.javaway.sc.backend.repository
 
 import info.javaway.sc.backend.data.tables.Services
-import info.javaway.sc.backend.models.Service
-import info.javaway.sc.backend.models.ServiceStatus
+import info.javaway.sc.api.models.Service
+import info.javaway.sc.api.models.ServiceStatus
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*

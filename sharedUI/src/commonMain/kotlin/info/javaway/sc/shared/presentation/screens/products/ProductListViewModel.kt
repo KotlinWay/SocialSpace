@@ -3,7 +3,7 @@ package info.javaway.sc.shared.presentation.screens.products
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import info.javaway.sc.shared.domain.models.ProductResponse
+import info.javaway.sc.shared.domain.models.Product
 import info.javaway.sc.shared.domain.repository.ProductRepository
 import io.github.aakira.napier.Napier.e
 import kotlinx.coroutines.CoroutineScope
@@ -49,13 +49,14 @@ class ProductListViewModel(
 
         viewModelScope.launch {
             val result = productRepository.getProducts(page = currentPage, pageSize = pageSize)
-            result.onSuccess { productList ->
-                if (productList.products.isEmpty()) {
+            result.onSuccess { products ->
+                if (products.isEmpty()) {
                     state = ProductListState.Empty
                 } else {
-                    hasMorePages = currentPage < productList.totalPages
+                    // Предполагаем что есть ещё страницы, если загрузили полный pageSize
+                    hasMorePages = products.size == pageSize
                     state = ProductListState.Success(
-                        products = productList.products,
+                        products = products,
                         hasMore = hasMorePages
                     )
                 }
@@ -78,13 +79,13 @@ class ProductListViewModel(
 
         viewModelScope.launch {
             val result = productRepository.getProducts(page = currentPage, pageSize = pageSize)
-            result.onSuccess { productList ->
-                if (productList.products.isEmpty()) {
+            result.onSuccess { products ->
+                if (products.isEmpty()) {
                     state = ProductListState.Empty
                 } else {
-                    hasMorePages = currentPage < productList.totalPages
+                    hasMorePages = products.size == pageSize
                     state = ProductListState.Success(
-                        products = productList.products,
+                        products = products,
                         hasMore = hasMorePages
                     )
                 }
@@ -113,13 +114,13 @@ class ProductListViewModel(
         viewModelScope.launch {
             val nextPage = currentPage + 1
             val result = productRepository.getProducts(page = nextPage, pageSize = pageSize)
-            result.onSuccess { productList ->
+            result.onSuccess { products ->
                 currentPage = nextPage
-                hasMorePages = currentPage < productList.totalPages
+                hasMorePages = products.size == pageSize
 
                 // Добавляем новые товары к существующим
                 state = ProductListState.Success(
-                    products = currentState.products + productList.products,
+                    products = currentState.products + products,
                     hasMore = hasMorePages,
                     isLoadingMore = false
                 )
@@ -152,7 +153,7 @@ sealed interface ProductListState {
      * Успешная загрузка
      */
     data class Success(
-        val products: List<ProductResponse>,
+        val products: List<Product>,
         val hasMore: Boolean,
         val isLoadingMore: Boolean = false
     ) : ProductListState

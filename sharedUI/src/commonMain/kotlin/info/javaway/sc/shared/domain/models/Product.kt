@@ -1,44 +1,10 @@
 package info.javaway.sc.shared.domain.models
 
-import kotlinx.serialization.Serializable
-
 /**
- * Товар
+ * Domain модель товара
+ * Используется внутри приложения для бизнес-логики и UI
  */
-@Serializable
 data class Product(
-    val id: Long,
-    val userId: Long,
-    val title: String,
-    val description: String,
-    val price: Double,
-    val categoryId: Long,
-    val condition: ProductCondition,
-    val images: List<String>,
-    val status: ProductStatus,
-    val views: Int = 0,
-    val createdAt: String,
-    val updatedAt: String
-)
-
-@Serializable
-enum class ProductCondition {
-    NEW,
-    USED
-}
-
-@Serializable
-enum class ProductStatus {
-    ACTIVE,
-    SOLD,
-    ARCHIVED
-}
-
-/**
- * Расширенный ответ с информацией о товаре
- */
-@Serializable
-data class ProductResponse(
     val id: Long,
     val title: String,
     val description: String,
@@ -55,13 +21,18 @@ data class ProductResponse(
 )
 
 /**
- * Список товаров с пагинацией
+ * Состояние товара (новое/б/у)
  */
-@Serializable
-data class ProductListResponse(
-    val products: List<ProductResponse>,
-    val total: Long,
-    val page: Int,
-    val pageSize: Int,
-    val totalPages: Int
-)
+enum class ProductCondition {
+    NEW,
+    USED
+}
+
+/**
+ * Статус товара в системе
+ */
+enum class ProductStatus {
+    ACTIVE,
+    SOLD,
+    ARCHIVED
+}

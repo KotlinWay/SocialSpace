@@ -1,7 +1,7 @@
 package info.javaway.sc.backend.routes
 
-import info.javaway.sc.backend.models.ErrorResponse
-import info.javaway.sc.backend.models.FileUploadResponse
+import info.javaway.sc.api.models.ErrorResponse
+import info.javaway.sc.api.models.FileUploadResponse
 import info.javaway.sc.backend.repository.UserRepository
 import info.javaway.sc.backend.services.FileService
 import info.javaway.sc.backend.services.FileType
@@ -250,8 +250,9 @@ fun Route.fileRoutes(
                 }
 
                 // Удаляем старый аватар, если он был
-                if (!user.avatar.isNullOrBlank()) {
-                    FileService.deleteFile(user.avatar)
+                val avatar = user.avatar
+                if (!avatar.isNullOrBlank()) {
+                    FileService.deleteFile(avatar)
                 }
 
                 // Обновляем аватар в профиле пользователя

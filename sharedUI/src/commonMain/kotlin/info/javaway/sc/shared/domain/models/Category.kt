@@ -1,19 +1,18 @@
 package info.javaway.sc.shared.domain.models
 
-import kotlinx.serialization.Serializable
-
 /**
- * Категория товаров/услуг
+ * Domain модель категории
  */
-@Serializable
 data class Category(
     val id: Long,
     val name: String,
-    val icon: String? = null,
+    val icon: String?,
     val type: CategoryType
 )
 
-@Serializable
+/**
+ * Тип категории
+ */
 enum class CategoryType {
     PRODUCT,
     SERVICE
@@ -21,8 +20,8 @@ enum class CategoryType {
 
 /**
  * Краткая информация о категории
+ * Используется в списках товаров/услуг
  */
-@Serializable
 data class CategoryInfo(
     val id: Long,
     val name: String,

@@ -1,6 +1,6 @@
 package info.javaway.sc.backend.data.tables
 
-import info.javaway.sc.backend.models.UserRole
+import info.javaway.sc.api.models.UserRole
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant

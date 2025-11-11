@@ -1,25 +1,24 @@
 package info.javaway.sc.shared.domain.models
 
-import kotlinx.serialization.Serializable
-
 /**
- * Пользователь
+ * Domain модель пользователя (полная)
  */
-@Serializable
 data class User(
     val id: Long,
     val phone: String,
-    val email: String? = null,
+    val email: String?,
     val name: String,
-    val avatar: String? = null,
-    val bio: String? = null,
-    val rating: Double? = null,
+    val avatar: String?,
+    val bio: String?,
+    val rating: Double?,
     val createdAt: String,
     val isVerified: Boolean = false,
     val role: UserRole = UserRole.USER
 )
 
-@Serializable
+/**
+ * Роли пользователей
+ */
 enum class UserRole {
     USER,
     MODERATOR,
@@ -27,9 +26,9 @@ enum class UserRole {
 }
 
 /**
- * Публичная информация о пользователе (для списков товаров/услуг)
+ * Публичная информация о пользователе
+ * Используется в списках товаров/услуг
  */
-@Serializable
 data class UserPublicInfo(
     val id: Long,
     val name: String,

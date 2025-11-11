@@ -16,6 +16,9 @@ application {
 }
 
 dependencies {
+    // API Models - общие модели для клиента и сервера
+    implementation(project(":api-models"))
+
     // Ktor Server
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)

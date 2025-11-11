@@ -1,8 +1,8 @@
 package info.javaway.sc.backend.repository
 
 import info.javaway.sc.backend.data.tables.Users
-import info.javaway.sc.backend.models.User
-import info.javaway.sc.backend.models.UserRole
+import info.javaway.sc.api.models.User
+import info.javaway.sc.api.models.UserRole
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction

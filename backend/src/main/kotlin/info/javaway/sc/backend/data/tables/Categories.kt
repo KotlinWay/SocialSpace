@@ -1,6 +1,6 @@
 package info.javaway.sc.backend.data.tables
 
-import info.javaway.sc.backend.models.CategoryType
+import info.javaway.sc.api.models.CategoryType
 import org.jetbrains.exposed.dao.id.LongIdTable
 
 object Categories : LongIdTable("categories") {
