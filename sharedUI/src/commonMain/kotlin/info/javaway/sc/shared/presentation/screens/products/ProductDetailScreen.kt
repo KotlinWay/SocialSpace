@@ -1,0 +1,471 @@
+package info.javaway.sc.shared.presentation.screens.products
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import coil3.compose.SubcomposeAsyncImage
+import info.javaway.sc.shared.domain.models.Product
+import info.javaway.sc.shared.domain.models.ProductCondition
+import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
+
+/**
+ * Экран деталей товара
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProductDetailScreen(
+    productId: Long,
+    onBack: () -> Unit,
+    onCallSeller: (String) -> Unit,
+    viewModel: ProductDetailViewModel = koinInject { parametersOf(productId) }
+) {
+    val state = viewModel.state
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Детали товара") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
+                    }
+                },
+                actions = {
+                    // Кнопка избранного (только для Success состояния)
+                    if (state is ProductDetailState.Success) {
+                        IconButton(
+                            onClick = { viewModel.toggleFavorite() },
+                            enabled = !state.isTogglingFavorite
+                        ) {
+                            Icon(
+                                imageVector = if (state.isFavorite) {
+                                    Icons.Filled.Favorite
+                                } else {
+                                    Icons.Outlined.FavoriteBorder
+                                },
+                                contentDescription = if (state.isFavorite) {
+                                    "Удалить из избранного"
+                                } else {
+                                    "Добавить в избранное"
+                                },
+                                tint = if (state.isFavorite) {
+                                    Color.Red
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                }
+                            )
+                        }
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when (state) {
+                is ProductDetailState.Loading -> {
+                    LoadingState()
+                }
+
+                is ProductDetailState.Success -> {
+                    ProductDetailContent(
+                        product = state.product,
+                        onCallSeller = onCallSeller
+                    )
+                }
+
+                is ProductDetailState.Error -> {
+                    ErrorState(
+                        message = state.message,
+                        onRetry = { viewModel.loadProduct() }
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Контент с деталями товара
+ */
+@Composable
+private fun ProductDetailContent(
+    product: Product,
+    onCallSeller: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        // Галерея изображений
+        ImageGallery(images = product.images)
+
+        // Информация о товаре
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Название и цена
+            Text(
+                text = product.title,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "${product.price} ₽",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Категория и состояние
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CategoryChip(text = product.category.name)
+                ConditionChip(condition = product.condition)
+            }
+
+            // Описание
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Описание",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = product.description,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            // Информация о продавце
+            SellerCard(
+                seller = product.user,
+                onCallSeller = onCallSeller
+            )
+
+            // Дополнительная информация
+            AdditionalInfoCard(
+                views = product.views,
+                createdAt = product.createdAt
+            )
+        }
+    }
+}
+
+/**
+ * Галерея изображений с горизонтальным свайпом
+ */
+@Composable
+private fun ImageGallery(images: List<String>) {
+    val pagerState = rememberPagerState(pageCount = { images.size })
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            SubcomposeAsyncImage(
+                model = images[page],
+                contentDescription = "Изображение товара ${page + 1}",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                loading = {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                },
+                error = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Ошибка загрузки")
+                    }
+                }
+            )
+        }
+
+        // Индикаторы страниц (если больше 1 изображения)
+        if (images.size > 1) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                repeat(images.size) { index ->
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (index == pagerState.currentPage) {
+                                    Color.White
+                                } else {
+                                    Color.White.copy(alpha = 0.5f)
+                                }
+                            )
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Карточка продавца с кнопкой "Позвонить"
+ */
+@Composable
+private fun SellerCard(
+    seller: info.javaway.sc.api.models.UserPublicInfo,
+    onCallSeller: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Продавец",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = seller.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = seller.phone,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Button(
+                onClick = { onCallSeller(seller.phone) },
+                modifier = Modifier.height(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Phone,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Позвонить")
+            }
+        }
+    }
+}
+
+/**
+ * Дополнительная информация (просмотры, дата)
+ */
+@Composable
+private fun AdditionalInfoCard(
+    views: Int,
+    createdAt: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "Просмотры",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = views.toString(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "Опубликовано",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = createdAt.take(10), // Берем только дату (YYYY-MM-DD)
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Чип категории
+ */
+@Composable
+private fun CategoryChip(text: String) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer
+        )
+    }
+}
+
+/**
+ * Чип состояния товара
+ */
+@Composable
+private fun ConditionChip(condition: ProductCondition) {
+    val (text, color) = when (condition) {
+        ProductCondition.NEW -> "Новое" to MaterialTheme.colorScheme.tertiaryContainer
+        ProductCondition.USED -> "Б/У" to MaterialTheme.colorScheme.surfaceVariant
+    }
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = color
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelMedium
+        )
+    }
+}
+
+/**
+ * Состояние загрузки
+ */
+@Composable
+private fun LoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+/**
+ * Состояние ошибки
+ */
+@Composable
+private fun ErrorState(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Ошибка загрузки",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.error
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Button(onClick = onRetry) {
+                Text("Повторить")
+            }
+        }
+    }
+}

@@ -5,6 +5,8 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.bringToFront
 import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.pop
+import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
 import kotlinx.serialization.Serializable
 
@@ -29,7 +31,15 @@ class MainComponent(
 
     private fun child(config: Config, componentContext: ComponentContext): Child =
         when (config) {
-            is Config.Products -> Child.Products
+            is Config.Products -> Child.Products(
+                onProductClick = { productId ->
+                    navigation.push(Config.ProductDetail(productId))
+                }
+            )
+            is Config.ProductDetail -> Child.ProductDetail(
+                productId = config.productId,
+                onBack = { navigation.pop() }
+            )
             is Config.Services -> Child.Services
             is Config.Profile -> Child.Profile(
                 onLogout = onLogout
@@ -50,8 +60,17 @@ class MainComponent(
     }
 
     sealed class Child {
-        data object Products : Child()
+        data class Products(
+            val onProductClick: (Long) -> Unit
+        ) : Child()
+
+        data class ProductDetail(
+            val productId: Long,
+            val onBack: () -> Unit
+        ) : Child()
+
         data object Services : Child()
+
         data class Profile(
             val onLogout: () -> Unit
         ) : Child()
@@ -61,6 +80,9 @@ class MainComponent(
     sealed interface Config {
         @Serializable
         data object Products : Config
+
+        @Serializable
+        data class ProductDetail(val productId: Long) : Config
 
         @Serializable
         data object Services : Config

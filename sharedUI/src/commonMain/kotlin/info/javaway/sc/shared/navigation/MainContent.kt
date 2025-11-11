@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import info.javaway.sc.shared.presentation.screens.home.HomeScreen
+import info.javaway.sc.shared.presentation.screens.products.ProductDetailScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductListScreen
 
 /**
@@ -75,7 +76,19 @@ fun MainContent(
             ) {
                 when (val child = it.instance) {
                     is MainComponent.Child.Products -> {
-                        ProductListScreen()
+                        ProductListScreen(
+                            onProductClick = child.onProductClick
+                        )
+                    }
+                    is MainComponent.Child.ProductDetail -> {
+                        ProductDetailScreen(
+                            productId = child.productId,
+                            onBack = child.onBack,
+                            onCallSeller = { phone ->
+                                // TODO: Реализовать в Android через Intent.ACTION_DIAL
+                                println("Call seller: $phone")
+                            }
+                        )
                     }
                     is MainComponent.Child.Services -> {
                         // TODO: Заменить на ServiceListScreen
