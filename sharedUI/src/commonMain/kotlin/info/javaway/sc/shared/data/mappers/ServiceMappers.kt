@@ -1,15 +1,15 @@
 package info.javaway.sc.shared.data.mappers
 
-import info.javaway.sc.api.models.Service as ApiService
 import info.javaway.sc.api.models.ServiceStatus as ApiServiceStatus
 import info.javaway.sc.api.models.ServiceResponse as ApiServiceResponse
+import info.javaway.sc.api.models.ServiceListItem as ApiServiceListItem
 import info.javaway.sc.shared.domain.models.Service
 import info.javaway.sc.shared.domain.models.ServiceStatus
 
 /**
- * Маппер: Service (API DTO) → Service (Domain)
+ * Маппер: ServiceListItem (API DTO) → Service (Domain)
  */
-fun ApiService.toDomain(): Service {
+fun ApiServiceListItem.toDomain(): Service {
     return Service(
         id = id,
         title = title,

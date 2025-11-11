@@ -22,34 +22,42 @@ class ServiceRepositoryImpl(
         page: Int,
         pageSize: Int
     ): kotlin.Result<List<Service>> {
-        val result = apiClient.getServices(
+        return apiClient.getServices(
             categoryId = categoryId,
             status = status?.toApi(),
             search = search,
             page = page,
             pageSize = pageSize
+        ).fold(
+            onSuccess = { response ->
+                kotlin.Result.success(response.services.map { it.toDomain() })
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
         )
-
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.services.map { it.toDomain() })
-            is Result.Error -> result
-        }
     }
 
     override suspend fun getService(serviceId: Long): kotlin.Result<Service> {
-        val result = apiClient.getService(serviceId)
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.toDomain())
-            is Result.Error -> result
-        }
+        return apiClient.getService(serviceId).fold(
+            onSuccess = { service ->
+                kotlin.Result.success(service.toDomain())
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
     }
 
     override suspend fun getMyServices(): kotlin.Result<List<Service>> {
-        val result = apiClient.getMyServices()
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.map { it.toDomain() })
-            is Result.Error -> result
-        }
+        return apiClient.getMyServices().fold(
+            onSuccess = { services ->
+                kotlin.Result.success(services.map { it.toDomain() })
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
     }
 
     // Маппер Domain → API для параметров фильтра

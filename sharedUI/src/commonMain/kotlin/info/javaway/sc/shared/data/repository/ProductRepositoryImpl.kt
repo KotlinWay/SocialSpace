@@ -26,8 +26,8 @@ class ProductRepositoryImpl(
         search: String?,
         page: Int,
         pageSize: Int
-    ): Result<List<Product>> {
-        val result = apiClient.getProducts(
+    ): kotlin.Result<List<Product>> {
+        return apiClient.getProducts(
             categoryId = categoryId,
             status = status?.toApi(),
             condition = condition?.toApi(),
@@ -36,55 +36,70 @@ class ProductRepositoryImpl(
             search = search,
             page = page,
             pageSize = pageSize
-        )
-
-        return when (result) {
-            is Result.Success -> {
-                val domainProducts = result.data.products.map { it.toDomain() }
-                Result.Success(domainProducts)
+        ).fold(
+            onSuccess = { response ->
+                val domainProducts = response.products.map { it.toDomain() }
+                kotlin.Result.success(domainProducts)
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
             }
-            is Result.Error -> result
-        }
+        )
     }
 
     override suspend fun getProduct(productId: Long): kotlin.Result<Product> {
-        val result = apiClient.getProduct(productId)
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.toDomain())
-            is Result.Error -> result
-        }
+        return apiClient.getProduct(productId).fold(
+            onSuccess = { product ->
+                kotlin.Result.success(product.toDomain())
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
     }
 
     override suspend fun getMyProducts(): kotlin.Result<List<Product>> {
-        val result = apiClient.getMyProducts()
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.map { it.toDomain() })
-            is Result.Error -> result
-        }
+        return apiClient.getMyProducts().fold(
+            onSuccess = { products ->
+                kotlin.Result.success(products.map { it.toDomain() })
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
     }
 
     override suspend fun getFavoriteProducts(page: Int, pageSize: Int): kotlin.Result<List<Product>> {
-        val result = apiClient.getFavoriteProducts(page, pageSize)
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.products.map { it.toDomain() })
-            is Result.Error -> result
-        }
+        return apiClient.getFavoriteProducts(page, pageSize).fold(
+            onSuccess = { response ->
+                kotlin.Result.success(response.products.map { it.toDomain() })
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
     }
 
     override suspend fun addToFavorites(productId: Long): kotlin.Result<Unit> {
-        val result = apiClient.addToFavorites(productId)
-        return when (result) {
-            is Result.Success -> Result.Success(Unit)
-            is Result.Error -> result
-        }
+        return apiClient.addToFavorites(productId).fold(
+            onSuccess = {
+                kotlin.Result.success(Unit)
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
     }
 
     override suspend fun removeFromFavorites(productId: Long): kotlin.Result<Unit> {
-        val result = apiClient.removeFromFavorites(productId)
-        return when (result) {
-            is Result.Success -> Result.Success(Unit)
-            is Result.Error -> result
-        }
+        return apiClient.removeFromFavorites(productId).fold(
+            onSuccess = {
+                kotlin.Result.success(Unit)
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
     }
 
     // Мапперы Domain → API для параметров фильтров

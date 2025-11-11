@@ -80,8 +80,39 @@ fun Route.serviceRoutes(
 
                 val totalPages = ceil(total.toDouble() / pageSize).toInt()
 
+                // Маппим Service -> ServiceListItem с дополнительной информацией
+                val serviceListItems = services.mapNotNull { service ->
+                    val user = userRepository.findById(service.userId) ?: return@mapNotNull null
+                    val category = categoryRepository.findById(service.categoryId) ?: return@mapNotNull null
+
+                    ServiceListItem(
+                        id = service.id,
+                        title = service.title,
+                        description = service.description,
+                        price = service.price,
+                        images = service.images,
+                        status = service.status,
+                        views = service.views,
+                        createdAt = service.createdAt,
+                        updatedAt = service.updatedAt,
+                        user = UserPublicInfo(
+                            id = user.id,
+                            name = user.name,
+                            avatar = user.avatar,
+                            phone = user.phone,
+                            rating = user.rating,
+                            isVerified = user.isVerified
+                        ),
+                        category = CategoryInfo(
+                            id = category.id,
+                            name = category.name,
+                            icon = category.icon
+                        )
+                    )
+                }
+
                 val response = ServiceListResponse(
-                    services = services,
+                    services = serviceListItems,
                     total = total,
                     page = page,
                     pageSize = pageSize,
@@ -201,7 +232,38 @@ fun Route.serviceRoutes(
 
                     val services = serviceRepository.findByUserId(userId, limit = pageSize, offset = offset)
 
-                    call.respond(HttpStatusCode.OK, services)
+                    // Маппим Service -> ServiceListItem
+                    val serviceListItems = services.mapNotNull { service ->
+                        val user = userRepository.findById(service.userId) ?: return@mapNotNull null
+                        val category = categoryRepository.findById(service.categoryId) ?: return@mapNotNull null
+
+                        ServiceListItem(
+                            id = service.id,
+                            title = service.title,
+                            description = service.description,
+                            price = service.price,
+                            images = service.images,
+                            status = service.status,
+                            views = service.views,
+                            createdAt = service.createdAt,
+                            updatedAt = service.updatedAt,
+                            user = UserPublicInfo(
+                                id = user.id,
+                                name = user.name,
+                                avatar = user.avatar,
+                                phone = user.phone,
+                                rating = user.rating,
+                                isVerified = user.isVerified
+                            ),
+                            category = CategoryInfo(
+                                id = category.id,
+                                name = category.name,
+                                icon = category.icon
+                            )
+                        )
+                    }
+
+                    call.respond(HttpStatusCode.OK, serviceListItems)
                 } catch (e: Exception) {
                     call.application.log.error("Get my services error", e)
                     call.respond(

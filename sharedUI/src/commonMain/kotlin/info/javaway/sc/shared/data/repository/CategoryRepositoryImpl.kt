@@ -14,26 +14,35 @@ class CategoryRepositoryImpl(
 ) : CategoryRepository {
 
     override suspend fun getAllCategories(): kotlin.Result<List<Category>> {
-        val result = apiClient.getAllCategories()
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.map { it.toDomain() })
-            is Result.Error -> result
-        }
+        return apiClient.getAllCategories().fold(
+            onSuccess = { categories ->
+                kotlin.Result.success(categories.map { it.toDomain() })
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
     }
 
     override suspend fun getProductCategories(): kotlin.Result<List<Category>> {
-        val result = apiClient.getProductCategories()
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.map { it.toDomain() })
-            is Result.Error -> result
-        }
+        return apiClient.getProductCategories().fold(
+            onSuccess = { categories ->
+                kotlin.Result.success(categories.map { it.toDomain() })
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
     }
 
     override suspend fun getServiceCategories(): kotlin.Result<List<Category>> {
-        val result = apiClient.getServiceCategories()
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.map { it.toDomain() })
-            is Result.Error -> result
-        }
+        return apiClient.getServiceCategories().fold(
+            onSuccess = { categories ->
+                kotlin.Result.success(categories.map { it.toDomain() })
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
     }
 }

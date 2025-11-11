@@ -11,6 +11,7 @@ fun Application.configureSerialization() {
             prettyPrint = true
             isLenient = true
             ignoreUnknownKeys = true
+            encodeDefaults = true // ✅ Всегда сериализовать поля со значениями по умолчанию (включая null для nullable полей)
         })
     }
 }

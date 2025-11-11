@@ -31,37 +31,42 @@ class AuthRepositoryImpl(
             password = password
         )
 
-        val result = apiClient.register(request)
-        return when (result) {
-            is Result.Success -> {
-                tokenManager.saveToken(result.data.token)
-                tokenManager.saveUserId(result.data.user.id)
-                Result.Success(result.data.toDomain())
+        return apiClient.register(request).fold(
+            onSuccess = { authResponse ->
+                tokenManager.saveToken(authResponse.token)
+                tokenManager.saveUserId(authResponse.user.id)
+                kotlin.Result.success(authResponse.toDomain())
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
             }
-            is Result.Error -> result
-        }
+        )
     }
 
     override suspend fun login(phone: String, password: String): kotlin.Result<AuthResponse> {
         val request = ApiLoginRequest(phone = phone, password = password)
 
-        val result = apiClient.login(request)
-        return when (result) {
-            is Result.Success -> {
-                tokenManager.saveToken(result.data.token)
-                tokenManager.saveUserId(result.data.user.id)
-                Result.Success(result.data.toDomain())
+        return apiClient.login(request).fold(
+            onSuccess = { authResponse ->
+                tokenManager.saveToken(authResponse.token)
+                tokenManager.saveUserId(authResponse.user.id)
+                kotlin.Result.success(authResponse.toDomain())
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
             }
-            is Result.Error -> result
-        }
+        )
     }
 
     override suspend fun getCurrentUser(): kotlin.Result<User> {
-        val result = apiClient.getCurrentUser()
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.toDomain())
-            is Result.Error -> result
-        }
+        return apiClient.getCurrentUser().fold(
+            onSuccess = { user ->
+                kotlin.Result.success(user.toDomain())
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
     }
 
     override suspend fun logout() {

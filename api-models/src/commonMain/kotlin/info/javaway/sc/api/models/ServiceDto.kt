@@ -38,11 +38,29 @@ data class ServiceResponse(
 )
 
 /**
+ * Элемент списка услуг (flat структура для списка)
+ */
+@Serializable
+data class ServiceListItem(
+    val id: Long,
+    val title: String,
+    val description: String,
+    val price: String?,
+    val images: List<String>,
+    val status: ServiceStatus,
+    val views: Int,
+    val createdAt: String,
+    val updatedAt: String,
+    val user: UserPublicInfo,
+    val category: CategoryInfo
+)
+
+/**
  * Ответ со списком услуг (с пагинацией)
  */
 @Serializable
 data class ServiceListResponse(
-    val services: List<Service>,
+    val services: List<ServiceListItem>,
     val total: Long,
     val page: Int,
     val pageSize: Int,

@@ -11,6 +11,17 @@ kotlin {
         }
     }
 
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "sharedUI"
+            isStatic = true
+        }
+    }
+
     sourceSets {
         commonMain.dependencies {
             // Только kotlinx.serialization для сериализации моделей
