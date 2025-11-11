@@ -1,135 +1,77 @@
 package info.javaway.sc.shared.presentation.screens.products
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import info.javaway.sc.shared.domain.models.Product
+import info.javaway.sc.shared.domain.models.ProductCondition
+import info.javaway.sc.shared.domain.models.ProductStatus
 import info.javaway.sc.shared.domain.repository.ProductRepository
-import io.github.aakira.napier.Napier.e
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 
 /**
- * ViewModel для списка товаров
+ * ViewModel для списка товаров с Paging 3
  */
 class ProductListViewModel(
     private val productRepository: ProductRepository
 ) {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    var state by mutableStateOf<ProductListState>(ProductListState.Empty)
-        private set
+    // Фильтры для товаров
+    private val _filters = MutableStateFlow(ProductFiltersState())
+    val filters: StateFlow<ProductFiltersState> = _filters.asStateFlow()
 
-    var isRefreshing by mutableStateOf(false)
-        private set
+    /**
+     * Flow с пагинированными товарами
+     * При изменении фильтров автоматически создается новый PagingSource
+     */
+    val productsFlow: Flow<PagingData<Product>> = _filters
+        .flatMapLatest { filters ->
+            productRepository.getProductsPaged(
+                categoryId = filters.categoryId,
+                status = filters.status,
+                condition = filters.condition,
+                minPrice = filters.minPrice,
+                maxPrice = filters.maxPrice,
+                search = filters.search
+            )
+        }
+        .cachedIn(viewModelScope) // Кэширование в scope
 
-    private var currentPage = 1
-    private val pageSize = 20
-    private var hasMorePages = true
-
-    init {
-        loadProducts()
+    /**
+     * Обновить фильтры
+     * Автоматически триггерит новую загрузку через productsFlow
+     */
+    fun updateFilters(
+        categoryId: Long? = null,
+        status: ProductStatus? = null,
+        condition: ProductCondition? = null,
+        minPrice: Double? = null,
+        maxPrice: Double? = null,
+        search: String? = null
+    ) {
+        _filters.value = ProductFiltersState(
+            categoryId = categoryId,
+            status = status,
+            condition = condition,
+            minPrice = minPrice,
+            maxPrice = maxPrice,
+            search = search
+        )
     }
 
     /**
-     * Загрузка товаров (первая страница)
+     * Сбросить все фильтры
      */
-    fun loadProducts() {
-        if (state is ProductListState.Loading) {
-            // Уже загружается
-            return
-        }
-
-        state = ProductListState.Loading
-        currentPage = 1
-        hasMorePages = true
-
-        viewModelScope.launch {
-            val result = productRepository.getProducts(page = currentPage, pageSize = pageSize)
-            result.onSuccess { products ->
-                if (products.isEmpty()) {
-                    state = ProductListState.Empty
-                } else {
-                    // Предполагаем что есть ещё страницы, если загрузили полный pageSize
-                    hasMorePages = products.size == pageSize
-                    state = ProductListState.Success(
-                        products = products,
-                        hasMore = hasMorePages
-                    )
-                }
-            }.onFailure { exception ->
-                e(exception, tag = "ProductListViewModel") { "Ошибка загрузки товаров" }
-                state = ProductListState.Error(
-                    message = exception.message ?: "Ошибка загрузки товаров"
-                )
-            }
-        }
-    }
-
-    /**
-     * Обновление списка (pull-to-refresh)
-     */
-    fun refreshProducts() {
-        isRefreshing = true
-        currentPage = 1
-        hasMorePages = true
-
-        viewModelScope.launch {
-            val result = productRepository.getProducts(page = currentPage, pageSize = pageSize)
-            result.onSuccess { products ->
-                if (products.isEmpty()) {
-                    state = ProductListState.Empty
-                } else {
-                    hasMorePages = products.size == pageSize
-                    state = ProductListState.Success(
-                        products = products,
-                        hasMore = hasMorePages
-                    )
-                }
-            }.onFailure { exception ->
-                e(exception, tag = "ProductListViewModel") { "Ошибка обновления товаров" }
-                state = ProductListState.Error(
-                    message = exception.message ?: "Ошибка обновления товаров"
-                )
-            }
-            isRefreshing = false
-        }
-    }
-
-    /**
-     * Загрузка следующей страницы (пагинация)
-     */
-    fun loadNextPage() {
-        val currentState = state
-        if (currentState !is ProductListState.Success || !hasMorePages || currentState.isLoadingMore) {
-            return
-        }
-
-        // Помечаем, что загружаем следующую страницу
-        state = currentState.copy(isLoadingMore = true)
-
-        viewModelScope.launch {
-            val nextPage = currentPage + 1
-            val result = productRepository.getProducts(page = nextPage, pageSize = pageSize)
-            result.onSuccess { products ->
-                currentPage = nextPage
-                hasMorePages = products.size == pageSize
-
-                // Добавляем новые товары к существующим
-                state = ProductListState.Success(
-                    products = currentState.products + products,
-                    hasMore = hasMorePages,
-                    isLoadingMore = false
-                )
-            }.onFailure { exception ->
-                e(exception, tag = "ProductListViewModel") { "Ошибка загрузки следующей страницы" }
-                // При ошибке загрузки страницы возвращаем предыдущее состояние
-                state = currentState.copy(isLoadingMore = false)
-            }
-        }
+    fun clearFilters() {
+        _filters.value = ProductFiltersState()
     }
 
     /**
@@ -141,30 +83,13 @@ class ProductListViewModel(
 }
 
 /**
- * Состояния списка товаров
+ * Состояние фильтров для товаров
  */
-sealed interface ProductListState {
-    /**
-     * Загрузка (первая загрузка)
-     */
-    data object Loading : ProductListState
-
-    /**
-     * Успешная загрузка
-     */
-    data class Success(
-        val products: List<Product>,
-        val hasMore: Boolean,
-        val isLoadingMore: Boolean = false
-    ) : ProductListState
-
-    /**
-     * Ошибка загрузки
-     */
-    data class Error(val message: String) : ProductListState
-
-    /**
-     * Список пуст
-     */
-    data object Empty : ProductListState
-}
+data class ProductFiltersState(
+    val categoryId: Long? = null,
+    val status: ProductStatus? = null,
+    val condition: ProductCondition? = null,
+    val minPrice: Double? = null,
+    val maxPrice: Double? = null,
+    val search: String? = null
+)

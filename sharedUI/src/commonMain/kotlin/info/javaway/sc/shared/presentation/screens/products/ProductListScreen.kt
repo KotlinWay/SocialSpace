@@ -8,118 +8,118 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import info.javaway.sc.shared.domain.models.Product
 import info.javaway.sc.shared.presentation.components.ProductCard
 import org.koin.compose.koinInject
 
 /**
- * Экран списка товаров
+ * Экран списка товаров с Paging 3
  */
 @Composable
 fun ProductListScreen(
     viewModel: ProductListViewModel = koinInject(),
     onProductClick: (Long) -> Unit = {}
 ) {
-    val state = viewModel.state
+    // Collect PagingData as LazyPagingItems
+    val lazyPagingItems: LazyPagingItems<Product> = viewModel.productsFlow.collectAsLazyPagingItems()
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        when (state) {
-            is ProductListState.Loading -> {
-                LoadingState()
-            }
-
-            is ProductListState.Success -> {
-                ProductList(
-                    state = state,
-                    onProductClick = onProductClick,
-                    onLoadMore = { viewModel.loadNextPage() },
-                    onRefresh = { viewModel.refreshProducts() }
-                )
-            }
-
-            is ProductListState.Error -> {
-                ErrorState(
-                    message = state.message,
-                    onRetry = { viewModel.loadProducts() }
-                )
-            }
-
-            is ProductListState.Empty -> {
-                EmptyState(
-                    onRefresh = { viewModel.refreshProducts() }
-                )
-            }
-        }
-    }
+    ProductListContent(
+        lazyPagingItems = lazyPagingItems,
+        onProductClick = onProductClick
+    )
 }
 
 /**
- * Список товаров с пагинацией
+ * Контент списка товаров с обработкой состояний Paging 3
  */
 @Composable
-private fun ProductList(
-    state: ProductListState.Success,
-    onProductClick: (Long) -> Unit,
-    onLoadMore: () -> Unit,
-    onRefresh: () -> Unit
+private fun ProductListContent(
+    lazyPagingItems: LazyPagingItems<Product>,
+    onProductClick: (Long) -> Unit
 ) {
-    val listState = rememberLazyListState()
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Обработка состояний загрузки
+        when {
+            // Первая загрузка (loading)
+            lazyPagingItems.loadState.refresh is LoadState.Loading -> {
+                LoadingState()
+            }
 
-    // Детект достижения конца списка для пагинации
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
-            val totalItems = state.products.size
-            lastVisibleItem != null && lastVisibleItem.index >= totalItems - 3 && state.hasMore && !state.isLoadingMore
-        }
-    }
+            // Ошибка при первой загрузке
+            lazyPagingItems.loadState.refresh is LoadState.Error -> {
+                val error = lazyPagingItems.loadState.refresh as LoadState.Error
+                ErrorState(
+                    message = error.error.message ?: "Ошибка загрузки товаров",
+                    onRetry = { lazyPagingItems.retry() }
+                )
+            }
 
-    LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore) {
-            onLoadMore()
-        }
-    }
+            // Пустой список
+            lazyPagingItems.itemCount == 0 -> {
+                EmptyState(
+                    onRefresh = { lazyPagingItems.refresh() }
+                )
+            }
 
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(
-            items = state.products,
-            key = { it.id }
-        ) { product ->
-            ProductCard(
-                product = product,
-                onClick = { onProductClick(product.id) }
-            )
-        }
-
-        // Loading indicator для пагинации
-        if (state.isLoadingMore) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
+            // Список товаров
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    CircularProgressIndicator()
+                    // Товары
+                    items(
+                        count = lazyPagingItems.itemCount,
+                        key = { index ->
+                            lazyPagingItems[index]?.id ?: index
+                        }
+                    ) { index ->
+                        val product = lazyPagingItems[index]
+                        if (product != null) {
+                            ProductCard(
+                                product = product,
+                                onClick = { onProductClick(product.id) }
+                            )
+                        }
+                    }
+
+                    // Loading indicator для пагинации (append)
+                    if (lazyPagingItems.loadState.append is LoadState.Loading) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
+
+                    // Ошибка при загрузке следующей страницы
+                    if (lazyPagingItems.loadState.append is LoadState.Error) {
+                        item {
+                            val error = lazyPagingItems.loadState.append as LoadState.Error
+                            AppendErrorItem(
+                                message = error.error.message ?: "Ошибка загрузки",
+                                onRetry = { lazyPagingItems.retry() }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -127,7 +127,7 @@ private fun ProductList(
 }
 
 /**
- * Состояние загрузки
+ * Состояние загрузки (первая загрузка)
  */
 @Composable
 private fun LoadingState() {
@@ -199,6 +199,37 @@ private fun EmptyState(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 32.dp)
             )
+        }
+    }
+}
+
+/**
+ * Ошибка при загрузке следующей страницы (append)
+ */
+@Composable
+private fun AppendErrorItem(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center
+            )
+            Button(onClick = onRetry) {
+                Text("Повторить")
+            }
         }
     }
 }

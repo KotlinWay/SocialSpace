@@ -74,11 +74,17 @@ kotlin {
 
             // Settings
             implementation(libs.multiplatformSettings)
+
+            // Paging 3
+            implementation(libs.paging.common)
         }
 
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.kotlinx.coroutines.android)
+
+            // Paging 3 Compose
+            implementation(libs.paging.compose)
         }
 
         iosMain.dependencies {
