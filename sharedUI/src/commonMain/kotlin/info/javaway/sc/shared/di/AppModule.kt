@@ -15,6 +15,7 @@ import info.javaway.sc.shared.presentation.screens.auth.RegisterViewModel
 import info.javaway.sc.shared.presentation.screens.home.HomeViewModel
 import info.javaway.sc.shared.presentation.screens.products.ProductDetailViewModel
 import info.javaway.sc.shared.presentation.screens.products.ProductListViewModel
+import info.javaway.sc.shared.presentation.screens.services.ServiceListViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
@@ -52,6 +53,7 @@ val viewModelModule = module {
     factoryOf(::RegisterViewModel)
     factoryOf(::HomeViewModel)
     factoryOf(::ProductListViewModel)
+    factoryOf(::ServiceListViewModel)
 
     // ProductDetailViewModel с параметром productId
     factory { (productId: Long) ->

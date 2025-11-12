@@ -1,11 +1,17 @@
 package info.javaway.sc.shared.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import info.javaway.sc.shared.data.api.ApiClient
 import info.javaway.sc.shared.data.mappers.toDomain
+import info.javaway.sc.shared.data.paging.ServiceFilters
+import info.javaway.sc.shared.data.paging.ServicePagingSource
 import info.javaway.sc.shared.domain.models.Service
 import info.javaway.sc.shared.domain.models.ServiceStatus
 import info.javaway.sc.shared.domain.repository.ServiceRepository
 import info.javaway.sc.api.models.ServiceStatus as ApiServiceStatus
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Реализация репозитория услуг
@@ -14,6 +20,20 @@ import info.javaway.sc.api.models.ServiceStatus as ApiServiceStatus
 class ServiceRepositoryImpl(
     private val apiClient: ApiClient
 ) : ServiceRepository {
+
+    /**
+     * Получить список услуг с пагинацией через Paging 3
+     */
+    override fun getServicesPaged(filters: ServiceFilters): Flow<PagingData<Service>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 20,
+                enablePlaceholders = false,
+                prefetchDistance = 5
+            ),
+            pagingSourceFactory = { ServicePagingSource(apiClient, filters) }
+        ).flow
+    }
 
     override suspend fun getServices(
         categoryId: Long?,
