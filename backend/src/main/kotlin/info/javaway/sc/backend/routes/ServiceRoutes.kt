@@ -361,7 +361,44 @@ fun Route.serviceRoutes(
                     )
 
                     if (service != null) {
-                        call.respond(HttpStatusCode.Created, service)
+                        // Получаем информацию о пользователе
+                        val user = userRepository.findById(userId)
+                        if (user == null) {
+                            call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponse("USER_NOT_FOUND", "Пользователь не найден")
+                            )
+                            return@post
+                        }
+
+                        // Получаем информацию о категории (уже проверяли выше, но на всякий случай)
+                        val categoryInfo = categoryRepository.findById(service.categoryId)
+                        if (categoryInfo == null) {
+                            call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponse("CATEGORY_NOT_FOUND", "Категория не найдена")
+                            )
+                            return@post
+                        }
+
+                        val response = ServiceResponse(
+                            service = service,
+                            user = UserPublicInfo(
+                                id = user.id,
+                                name = user.name,
+                                avatar = user.avatar,
+                                phone = user.phone,
+                                rating = user.rating,
+                                isVerified = user.isVerified
+                            ),
+                            category = CategoryInfo(
+                                id = categoryInfo.id,
+                                name = categoryInfo.name,
+                                icon = categoryInfo.icon
+                            )
+                        )
+
+                        call.respond(HttpStatusCode.Created, response)
                     } else {
                         call.respond(
                             HttpStatusCode.InternalServerError,
@@ -459,7 +496,44 @@ fun Route.serviceRoutes(
                     )
 
                     if (updatedService != null) {
-                        call.respond(HttpStatusCode.OK, updatedService)
+                        // Получаем информацию о пользователе
+                        val user = userRepository.findById(updatedService.userId)
+                        if (user == null) {
+                            call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponse("USER_NOT_FOUND", "Пользователь не найден")
+                            )
+                            return@put
+                        }
+
+                        // Получаем информацию о категории
+                        val categoryInfo = categoryRepository.findById(updatedService.categoryId)
+                        if (categoryInfo == null) {
+                            call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponse("CATEGORY_NOT_FOUND", "Категория не найдена")
+                            )
+                            return@put
+                        }
+
+                        val response = ServiceResponse(
+                            service = updatedService,
+                            user = UserPublicInfo(
+                                id = user.id,
+                                name = user.name,
+                                avatar = user.avatar,
+                                phone = user.phone,
+                                rating = user.rating,
+                                isVerified = user.isVerified
+                            ),
+                            category = CategoryInfo(
+                                id = categoryInfo.id,
+                                name = categoryInfo.name,
+                                icon = categoryInfo.icon
+                            )
+                        )
+
+                        call.respond(HttpStatusCode.OK, response)
                     } else {
                         call.respond(
                             HttpStatusCode.NotFound,
