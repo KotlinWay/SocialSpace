@@ -14,6 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import info.javaway.sc.api.models.ProductCondition
 import info.javaway.sc.shared.domain.models.CategoryType
 import info.javaway.sc.shared.presentation.components.CategorySelectorField
@@ -399,6 +402,8 @@ private fun ExistingImageCard(
     onRemove: () -> Unit,
     enabled: Boolean
 ) {
+    val context = LocalPlatformContext.current
+
     OutlinedCard(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -411,7 +416,10 @@ private fun ExistingImageCard(
         ) {
             // Превью изображения через Coil
             AsyncImage(
-                model = imageUrl,
+                model = ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = null,
                 modifier = Modifier
                     .size(80.dp),

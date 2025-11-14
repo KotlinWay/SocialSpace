@@ -66,7 +66,7 @@ class EditProductViewModel(
                         description = product.description,
                         price = product.price.toString(),
                         category = category,
-                        condition = product.condition,
+                        condition = info.javaway.sc.api.models.ProductCondition.valueOf(product.condition.name),
                         existingImages = product.images,
                         newImages = emptyList(),
                         removedExistingImageIndices = emptySet()
