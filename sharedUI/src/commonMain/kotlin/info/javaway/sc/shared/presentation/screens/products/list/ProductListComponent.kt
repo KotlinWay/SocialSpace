@@ -1,38 +1,44 @@
-package info.javaway.sc.shared.presentation.screens.products
+package info.javaway.sc.shared.presentation.screens.products.list
 
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.arkivanov.decompose.ComponentContext
 import info.javaway.sc.shared.domain.models.Product
 import info.javaway.sc.shared.domain.models.ProductCondition
 import info.javaway.sc.shared.domain.models.ProductStatus
 import info.javaway.sc.shared.domain.repository.ProductRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import info.javaway.sc.shared.presentation.core.BaseComponent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 
-/**
- * ViewModel для списка товаров с Paging 3
- */
-class ProductListViewModel(
+interface ProductListComponent {
+    val filters: StateFlow<ProductFiltersState>
+    val productsFlow: Flow<PagingData<Product>>
+
+    fun updateFilters(
+        categoryId: Long? = null,
+        status: ProductStatus? = null,
+        condition: ProductCondition? = null,
+        minPrice: Double? = null,
+        maxPrice: Double? = null,
+        search: String? = null
+    )
+
+    fun clearFilters()
+}
+
+class DefaultProductListComponent(
+    componentContext: ComponentContext,
     private val productRepository: ProductRepository
-) {
-    private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+) : BaseComponent(componentContext), ProductListComponent {
 
-    // Фильтры для товаров
     private val _filters = MutableStateFlow(ProductFiltersState())
-    val filters: StateFlow<ProductFiltersState> = _filters.asStateFlow()
+    override val filters: StateFlow<ProductFiltersState> = _filters.asStateFlow()
 
-    /**
-     * Flow с пагинированными товарами
-     * При изменении фильтров автоматически создается новый PagingSource
-     */
-    val productsFlow: Flow<PagingData<Product>> = _filters
+    override val productsFlow: Flow<PagingData<Product>> = _filters
         .flatMapLatest { filters ->
             productRepository.getProductsPaged(
                 categoryId = filters.categoryId,
@@ -43,19 +49,15 @@ class ProductListViewModel(
                 search = filters.search
             )
         }
-        .cachedIn(viewModelScope) // Кэширование в scope
+        .cachedIn(componentScope)
 
-    /**
-     * Обновить фильтры
-     * Автоматически триггерит новую загрузку через productsFlow
-     */
-    fun updateFilters(
-        categoryId: Long? = null,
-        status: ProductStatus? = null,
-        condition: ProductCondition? = null,
-        minPrice: Double? = null,
-        maxPrice: Double? = null,
-        search: String? = null
+    override fun updateFilters(
+        categoryId: Long?,
+        status: ProductStatus?,
+        condition: ProductCondition?,
+        minPrice: Double?,
+        maxPrice: Double?,
+        search: String?
     ) {
         _filters.value = ProductFiltersState(
             categoryId = categoryId,
@@ -67,18 +69,8 @@ class ProductListViewModel(
         )
     }
 
-    /**
-     * Сбросить все фильтры
-     */
-    fun clearFilters() {
+    override fun clearFilters() {
         _filters.value = ProductFiltersState()
-    }
-
-    /**
-     * Очистка ресурсов
-     */
-    fun onCleared() {
-        viewModelScope.cancel()
     }
 }
 

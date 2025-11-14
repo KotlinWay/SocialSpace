@@ -60,7 +60,6 @@ kotlin {
 
             // DI - Koin
             api(libs.koin.core)
-            api(libs.koin.compose)
 
             // Image loading - Coil
             implementation(libs.coil)

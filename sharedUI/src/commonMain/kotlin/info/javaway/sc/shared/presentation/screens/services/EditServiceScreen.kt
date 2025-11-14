@@ -28,17 +28,17 @@ import info.javaway.sc.shared.utils.rememberImagePickerLauncher
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditServiceScreen(
-    viewModel: EditServiceViewModel,
+    component: EditServiceComponent,
     onBack: () -> Unit,
     onSuccess: (Long) -> Unit
 ) {
-    val state by viewModel.state.collectAsState()
-    val formState by viewModel.formState.collectAsState()
-    val categories by viewModel.categories.collectAsState()
+    val state by component.state.collectAsState()
+    val formState by component.formState.collectAsState()
+    val categories by component.categories.collectAsState()
 
     // Image picker launcher
     val imagePickerLauncher = rememberImagePickerLauncher(maxImages = 5) { images ->
-        viewModel.selectImages(images)
+        component.selectImages(images)
     }
 
     // Обработка успешного обновления
@@ -93,7 +93,7 @@ fun EditServiceScreen(
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Button(onClick = { viewModel.retry() }) {
+                        Button(onClick = { component.retry() }) {
                             Text("Повторить")
                         }
                     }
@@ -105,15 +105,15 @@ fun EditServiceScreen(
                     formState = formState,
                     categories = categories,
                     isUpdating = state is EditServiceState.Updating,
-                    onTitleChange = viewModel::updateTitle,
-                    onDescriptionChange = viewModel::updateDescription,
-                    onPriceChange = viewModel::updatePrice,
-                    onToggleNegotiable = viewModel::toggleNegotiablePrice,
-                    onCategorySelect = viewModel::selectCategory,
+                    onTitleChange = component::updateTitle,
+                    onDescriptionChange = component::updateDescription,
+                    onPriceChange = component::updatePrice,
+                    onToggleNegotiable = component::toggleNegotiablePrice,
+                    onCategorySelect = component::selectCategory,
                     onAddImages = { imagePickerLauncher() },
-                    onRemoveExistingImage = viewModel::removeExistingImage,
-                    onRemoveNewImage = viewModel::removeNewImage,
-                    onUpdate = viewModel::updateService,
+                    onRemoveExistingImage = component::removeExistingImage,
+                    onRemoveNewImage = component::removeNewImage,
+                    onUpdate = component::updateService,
                     modifier = Modifier.padding(paddingValues)
                 )
             }

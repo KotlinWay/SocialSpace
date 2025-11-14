@@ -9,7 +9,14 @@ import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.router.stack.replaceCurrent
 import com.arkivanov.decompose.value.Value
 import info.javaway.sc.shared.data.local.TokenManager
+import info.javaway.sc.shared.domain.repository.AuthRepository
+import info.javaway.sc.shared.presentation.screens.auth.DefaultLoginComponent
+import info.javaway.sc.shared.presentation.screens.auth.DefaultRegisterComponent
+import info.javaway.sc.shared.presentation.screens.auth.LoginComponent
+import info.javaway.sc.shared.presentation.screens.auth.RegisterComponent
 import kotlinx.serialization.Serializable
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * Root компонент для навигации (Decompose)
@@ -17,7 +24,9 @@ import kotlinx.serialization.Serializable
 class RootComponent(
     componentContext: ComponentContext,
     private val tokenManager: TokenManager
-) : ComponentContext by componentContext {
+) : ComponentContext by componentContext, KoinComponent {
+
+    private val authRepository: AuthRepository by inject()
 
     private val navigation = StackNavigation<Config>()
 
@@ -37,10 +46,18 @@ class RootComponent(
     private fun child(config: Config, componentContext: ComponentContext): Child =
         when (config) {
             is Config.Login -> Child.Login(
+                component = DefaultLoginComponent(
+                    componentContext = componentContext,
+                    authRepository = authRepository
+                ),
                 onNavigateToRegister = { navigation.push(Config.Register) },
                 onLoginSuccess = { navigation.replaceCurrent(Config.Main) }
             )
             is Config.Register -> Child.Register(
+                component = DefaultRegisterComponent(
+                    componentContext = componentContext,
+                    authRepository = authRepository
+                ),
                 onNavigateToLogin = { navigation.pop() },
                 onRegisterSuccess = { navigation.replaceCurrent(Config.Main) }
             )
@@ -57,11 +74,13 @@ class RootComponent(
 
     sealed class Child {
         data class Login(
+            val component: LoginComponent,
             val onNavigateToRegister: () -> Unit,
             val onLoginSuccess: () -> Unit
         ) : Child()
 
         data class Register(
+            val component: RegisterComponent,
             val onNavigateToLogin: () -> Unit,
             val onRegisterSuccess: () -> Unit
         ) : Child()

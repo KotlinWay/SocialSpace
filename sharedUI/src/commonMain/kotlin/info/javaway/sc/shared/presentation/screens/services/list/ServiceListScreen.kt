@@ -1,4 +1,4 @@
-package info.javaway.sc.shared.presentation.screens.services
+package info.javaway.sc.shared.presentation.screens.services.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,19 +27,17 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import info.javaway.sc.shared.domain.models.Service
 import info.javaway.sc.shared.presentation.components.ServiceCard
-import org.koin.compose.koinInject
 
 /**
  * Экран списка услуг с Paging 3
  */
 @Composable
 fun ServiceListScreen(
-    viewModel: ServiceListViewModel = koinInject(),
-    onServiceClick: (Long) -> Unit = {},
-    onCreateService: () -> Unit = {}
+    component: ServiceListComponent,
+    onServiceClick: (Long) -> Unit,
+    onCreateService: () -> Unit
 ) {
-    // Collect PagingData as LazyPagingItems
-    val lazyPagingItems: LazyPagingItems<Service> = viewModel.servicesFlow.collectAsLazyPagingItems()
+    val lazyPagingItems: LazyPagingItems<Service> = component.servicesFlow.collectAsLazyPagingItems()
 
     ServiceListContent(
         lazyPagingItems = lazyPagingItems,

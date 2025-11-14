@@ -36,7 +36,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +47,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import info.javaway.sc.shared.domain.models.Service
 import info.javaway.sc.shared.presentation.components.ServiceCard
-import org.koin.compose.koinInject
 
 /**
  * Экран "Мои услуги"
@@ -55,19 +54,14 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyServicesScreen(
+    component: MyServicesComponent,
     onBack: () -> Unit,
     onServiceClick: (Long) -> Unit,
     onEditService: (Long) -> Unit,
     onCreateService: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: MyServicesViewModel = koinInject()
+    modifier: Modifier = Modifier
 ) {
-    // Очистка ViewModel при уничтожении экрана
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.onCleared()
-        }
-    }
+    val state by component.state.collectAsState()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -105,7 +99,7 @@ fun MyServicesScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (val state = viewModel.state) {
+            when (val state = state) {
                 is MyServicesState.Loading -> {
                     LoadingContent()
                 }
@@ -115,7 +109,7 @@ fun MyServicesScreen(
                         onServiceClick = onServiceClick,
                         onEditService = onEditService,
                         onDeleteService = { serviceId ->
-                            viewModel.deleteService(serviceId)
+                            component.deleteService(serviceId)
                         }
                     )
                 }
@@ -125,7 +119,7 @@ fun MyServicesScreen(
                 is MyServicesState.Error -> {
                     ErrorContent(
                         message = state.message,
-                        onRetry = { viewModel.loadMyServices() }
+                        onRetry = { component.loadMyServices() }
                     )
                 }
             }

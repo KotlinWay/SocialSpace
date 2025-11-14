@@ -1,4 +1,4 @@
-package info.javaway.sc.shared.presentation.screens.services
+package info.javaway.sc.shared.presentation.screens.services.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +37,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,8 +52,7 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import info.javaway.sc.shared.domain.models.Service
-import org.koin.compose.koinInject
-import org.koin.core.parameter.parametersOf
+import info.javaway.sc.shared.domain.models.UserPublicInfo
 
 /**
  * Экран деталей услуги
@@ -59,13 +60,12 @@ import org.koin.core.parameter.parametersOf
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServiceDetailScreen(
-    serviceId: Long,
+    component: ServiceDetailComponent,
     onBack: () -> Unit,
     onCallProvider: (String) -> Unit,
-    onEditService: ((Long) -> Unit)? = null,
-    viewModel: ServiceDetailViewModel = koinInject { parametersOf(serviceId) }
+    onEditService: ((Long) -> Unit)? = null
 ) {
-    val state = viewModel.state
+    val state by component.state.collectAsState()
 
     Scaffold(
         topBar = {
@@ -84,26 +84,26 @@ fun ServiceDetailScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (state) {
+            when (val currentState = state) {
                 is ServiceDetailState.Loading -> {
                     LoadingState()
                 }
 
                 is ServiceDetailState.Success -> {
                     ServiceDetailContent(
-                        service = state.service,
-                        isOwner = state.isOwner,
+                        service = currentState.service,
+                        isOwner = currentState.isOwner,
                         onCallProvider = onCallProvider,
                         onEditService = if (onEditService != null) {
-                            { onEditService(state.service.id) }
+                            { onEditService(currentState.service.id) }
                         } else null
                     )
                 }
 
                 is ServiceDetailState.Error -> {
                     ErrorState(
-                        message = state.message,
-                        onRetry = { viewModel.loadService() }
+                        message = currentState.message,
+                        onRetry = { component.loadService() }
                     )
                 }
             }
@@ -268,7 +268,7 @@ private fun ImageGallery(images: List<String>) {
  */
 @Composable
 private fun ProviderCard(
-    provider: info.javaway.sc.shared.domain.models.UserPublicInfo,
+    provider: UserPublicInfo,
     onCallProvider: (String) -> Unit
 ) {
     Card(

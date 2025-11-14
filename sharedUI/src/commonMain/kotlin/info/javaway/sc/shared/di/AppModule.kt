@@ -10,21 +10,6 @@ import info.javaway.sc.shared.domain.repository.AuthRepository
 import info.javaway.sc.shared.domain.repository.CategoryRepository
 import info.javaway.sc.shared.domain.repository.ProductRepository
 import info.javaway.sc.shared.domain.repository.ServiceRepository
-import info.javaway.sc.shared.presentation.screens.auth.LoginViewModel
-import info.javaway.sc.shared.presentation.screens.auth.RegisterViewModel
-import info.javaway.sc.shared.presentation.screens.home.HomeViewModel
-import info.javaway.sc.shared.presentation.screens.products.CreateProductViewModel
-import info.javaway.sc.shared.presentation.screens.products.EditProductViewModel
-import info.javaway.sc.shared.presentation.screens.products.MyProductsViewModel
-import info.javaway.sc.shared.presentation.screens.products.ProductDetailViewModel
-import info.javaway.sc.shared.presentation.screens.products.ProductListViewModel
-import info.javaway.sc.shared.presentation.screens.profile.ProfileViewModel
-import info.javaway.sc.shared.presentation.screens.services.CreateServiceViewModel
-import info.javaway.sc.shared.presentation.screens.services.EditServiceViewModel
-import info.javaway.sc.shared.presentation.screens.services.MyServicesViewModel
-import info.javaway.sc.shared.presentation.screens.services.ServiceDetailViewModel
-import info.javaway.sc.shared.presentation.screens.services.ServiceListViewModel
-import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -56,68 +41,8 @@ val repositoryModule = module {
     singleOf(::ServiceRepositoryImpl) bind ServiceRepository::class
 }
 
-val viewModelModule = module {
-    factoryOf(::LoginViewModel)
-    factoryOf(::RegisterViewModel)
-    factoryOf(::HomeViewModel)
-    factoryOf(::ProductListViewModel)
-    factoryOf(::ServiceListViewModel)
-    factoryOf(::ProfileViewModel)
-
-    // CreateProductViewModel для создания товара
-    factoryOf(::CreateProductViewModel)
-
-    // MyProductsViewModel для списка своих товаров
-    factoryOf(::MyProductsViewModel)
-
-    // CreateServiceViewModel для создания услуги
-    factoryOf(::CreateServiceViewModel)
-
-    // MyServicesViewModel для списка своих услуг
-    factoryOf(::MyServicesViewModel)
-
-    // ProductDetailViewModel с параметром productId
-    factory { (productId: Long) ->
-        ProductDetailViewModel(
-            productRepository = get(),
-            authRepository = get(),
-            productId = productId
-        )
-    }
-
-    // EditProductViewModel с параметром productId
-    factory { (productId: Long) ->
-        EditProductViewModel(
-            productId = productId,
-            productRepository = get(),
-            apiClient = get(),
-            categoryRepository = get()
-        )
-    }
-
-    // ServiceDetailViewModel с параметром serviceId
-    factory { (serviceId: Long) ->
-        ServiceDetailViewModel(
-            serviceRepository = get(),
-            authRepository = get(),
-            serviceId = serviceId
-        )
-    }
-
-    // EditServiceViewModel с параметром serviceId
-    factory { (serviceId: Long) ->
-        EditServiceViewModel(
-            serviceId = serviceId,
-            serviceRepository = get(),
-            apiClient = get(),
-            categoryRepository = get()
-        )
-    }
-}
-
 // Объединенный список всех модулей
 val appModules = listOf(
     dataModule,
-    repositoryModule,
-    viewModelModule
+    repositoryModule
 )

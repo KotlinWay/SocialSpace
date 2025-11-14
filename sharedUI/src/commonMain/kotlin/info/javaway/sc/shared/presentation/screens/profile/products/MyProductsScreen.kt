@@ -1,4 +1,4 @@
-package info.javaway.sc.shared.presentation.screens.products
+package info.javaway.sc.shared.presentation.screens.profile.products
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,10 +36,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +47,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import info.javaway.sc.shared.domain.models.Product
 import info.javaway.sc.shared.presentation.components.ProductCard
-import org.koin.compose.koinInject
 
 /**
  * Экран "Мои товары"
@@ -55,19 +54,14 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyProductsScreen(
+    component: MyProductsComponent,
     onBack: () -> Unit,
     onProductClick: (Long) -> Unit,
     onEditProduct: (Long) -> Unit,
     onCreateProduct: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: MyProductsViewModel = koinInject()
+    modifier: Modifier = Modifier
 ) {
-    // Очистка ViewModel при уничтожении экрана
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.onCleared()
-        }
-    }
+    val state by component.state.collectAsState()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -105,7 +99,7 @@ fun MyProductsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (val state = viewModel.state) {
+            when (val state = state) {
                 is MyProductsState.Loading -> {
                     LoadingContent()
                 }
@@ -115,7 +109,7 @@ fun MyProductsScreen(
                         onProductClick = onProductClick,
                         onEditProduct = onEditProduct,
                         onDeleteProduct = { productId ->
-                            viewModel.deleteProduct(productId)
+                            component.deleteProduct(productId)
                         }
                     )
                 }
@@ -125,7 +119,7 @@ fun MyProductsScreen(
                 is MyProductsState.Error -> {
                     ErrorContent(
                         message = state.message,
-                        onRetry = { viewModel.loadMyProducts() }
+                        onRetry = { component.loadMyProducts() }
                     )
                 }
             }

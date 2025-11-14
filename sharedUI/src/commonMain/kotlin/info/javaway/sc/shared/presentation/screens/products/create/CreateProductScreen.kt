@@ -1,4 +1,4 @@
-package info.javaway.sc.shared.presentation.screens.products
+package info.javaway.sc.shared.presentation.screens.products.create
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,11 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import info.javaway.sc.api.models.ProductCondition
+import info.javaway.sc.shared.domain.models.Category
 import info.javaway.sc.shared.domain.models.CategoryType
 import info.javaway.sc.shared.presentation.components.CategorySelectorField
+import info.javaway.sc.shared.utils.SelectedImage
 import info.javaway.sc.shared.utils.rememberImagePickerLauncher
 
 /**
@@ -24,17 +25,17 @@ import info.javaway.sc.shared.utils.rememberImagePickerLauncher
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateProductScreen(
-    viewModel: CreateProductViewModel,
+    component: CreateProductComponent,
     onBack: () -> Unit,
     onSuccess: (Long) -> Unit
 ) {
-    val state by viewModel.state.collectAsState()
-    val formState by viewModel.formState.collectAsState()
-    val categories by viewModel.categories.collectAsState()
+    val state by component.state.collectAsState()
+    val formState by component.formState.collectAsState()
+    val categories by component.categories.collectAsState()
 
     // Image picker launcher
     val imagePickerLauncher = rememberImagePickerLauncher(maxImages = 5) { images ->
-        viewModel.selectImages(images)
+        component.selectImages(images)
     }
 
     // Обработка успешного создания
@@ -89,7 +90,7 @@ fun CreateProductScreen(
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Button(onClick = { viewModel.retry() }) {
+                        Button(onClick = { component.retry() }) {
                             Text("Повторить")
                         }
                     }
@@ -101,14 +102,14 @@ fun CreateProductScreen(
                     formState = formState,
                     categories = categories,
                     isCreating = state is CreateProductState.Creating,
-                    onTitleChange = viewModel::updateTitle,
-                    onDescriptionChange = viewModel::updateDescription,
-                    onPriceChange = viewModel::updatePrice,
-                    onCategorySelect = viewModel::selectCategory,
-                    onConditionSelect = viewModel::selectCondition,
+                    onTitleChange = component::updateTitle,
+                    onDescriptionChange = component::updateDescription,
+                    onPriceChange = component::updatePrice,
+                    onCategorySelect = component::selectCategory,
+                    onConditionSelect = component::selectCondition,
                     onAddImages = { imagePickerLauncher() },
-                    onRemoveImage = viewModel::removeImage,
-                    onCreate = viewModel::createProduct,
+                    onRemoveImage = component::removeImage,
+                    onCreate = component::createProduct,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -135,12 +136,12 @@ fun CreateProductScreen(
 @Composable
 private fun CreateProductForm(
     formState: ProductFormState,
-    categories: List<info.javaway.sc.shared.domain.models.Category>,
+    categories: List<Category>,
     isCreating: Boolean,
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onPriceChange: (String) -> Unit,
-    onCategorySelect: (info.javaway.sc.shared.domain.models.Category) -> Unit,
+    onCategorySelect: (Category) -> Unit,
     onConditionSelect: (ProductCondition) -> Unit,
     onAddImages: () -> Unit,
     onRemoveImage: (Int) -> Unit,
@@ -273,7 +274,7 @@ private fun CreateProductForm(
  */
 @Composable
 private fun ImageSelector(
-    selectedImages: List<info.javaway.sc.shared.utils.SelectedImage>,
+    selectedImages: List<SelectedImage>,
     imagesError: String?,
     onAddImages: () -> Unit,
     onRemoveImage: (Int) -> Unit,
@@ -389,7 +390,7 @@ private fun ImageSelector(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ImagePreviewCard(
-    image: info.javaway.sc.shared.utils.SelectedImage,
+    image: SelectedImage,
     onRemove: () -> Unit,
     enabled: Boolean
 ) {
