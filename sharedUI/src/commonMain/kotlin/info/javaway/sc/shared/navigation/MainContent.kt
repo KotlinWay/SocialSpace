@@ -26,6 +26,7 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import info.javaway.sc.shared.presentation.screens.home.HomeScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductDetailScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductListScreen
+import info.javaway.sc.shared.presentation.screens.services.ServiceDetailScreen
 import info.javaway.sc.shared.presentation.screens.services.ServiceListScreen
 
 /**
@@ -94,6 +95,16 @@ fun MainContent(
                     is MainComponent.Child.Services -> {
                         ServiceListScreen(
                             onServiceClick = child.onServiceClick
+                        )
+                    }
+                    is MainComponent.Child.ServiceDetail -> {
+                        ServiceDetailScreen(
+                            serviceId = child.serviceId,
+                            onBack = child.onBack,
+                            onCallProvider = { phone ->
+                                // TODO: Реализовать в Android через Intent.ACTION_DIAL
+                                println("Call provider: $phone")
+                            }
                         )
                     }
                     is MainComponent.Child.Profile -> {
