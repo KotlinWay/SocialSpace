@@ -14,6 +14,7 @@ import info.javaway.sc.shared.presentation.screens.auth.LoginViewModel
 import info.javaway.sc.shared.presentation.screens.auth.RegisterViewModel
 import info.javaway.sc.shared.presentation.screens.home.HomeViewModel
 import info.javaway.sc.shared.presentation.screens.products.CreateProductViewModel
+import info.javaway.sc.shared.presentation.screens.products.MyProductsViewModel
 import info.javaway.sc.shared.presentation.screens.products.ProductDetailViewModel
 import info.javaway.sc.shared.presentation.screens.products.ProductListViewModel
 import info.javaway.sc.shared.presentation.screens.profile.ProfileViewModel
@@ -62,6 +63,9 @@ val viewModelModule = module {
 
     // CreateProductViewModel для создания товара
     factoryOf(::CreateProductViewModel)
+
+    // MyProductsViewModel для списка своих товаров
+    factoryOf(::MyProductsViewModel)
 
     // CreateServiceViewModel для создания услуги
     factoryOf(::CreateServiceViewModel)

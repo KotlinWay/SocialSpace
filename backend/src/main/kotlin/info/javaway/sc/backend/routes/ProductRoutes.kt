@@ -298,7 +298,45 @@ fun Route.productRoutes(
 
                     val products = productRepository.findByUserId(userId, limit = pageSize, offset = offset)
 
-                    call.respond(HttpStatusCode.OK, products)
+                    // Преобразуем List<Product> в List<ProductResponse>
+                    val productResponses = products.map { product ->
+                        // Получаем информацию о пользователе
+                        val user = userRepository.findById(product.userId)
+                            ?: return@get call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponse("USER_NOT_FOUND", "Пользователь не найден")
+                            )
+
+                        // Получаем информацию о категории
+                        val category = categoryRepository.findById(product.categoryId)
+                            ?: return@get call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponse("CATEGORY_NOT_FOUND", "Категория не найдена")
+                            )
+
+                        // Проверяем, добавлен ли товар в избранное (для текущего пользователя это всегда его товары)
+                        val isFavorite = productRepository.isFavorite(userId, product.id)
+
+                        ProductResponse(
+                            product = product,
+                            user = UserPublicInfo(
+                                id = user.id,
+                                name = user.name,
+                                avatar = user.avatar,
+                                phone = user.phone,
+                                rating = user.rating,
+                                isVerified = user.isVerified
+                            ),
+                            category = CategoryInfo(
+                                id = category.id,
+                                name = category.name,
+                                icon = category.icon
+                            ),
+                            isFavorite = isFavorite
+                        )
+                    }
+
+                    call.respond(HttpStatusCode.OK, productResponses)
                 } catch (e: Exception) {
                     call.application.log.error("Get my products error", e)
                     call.respond(

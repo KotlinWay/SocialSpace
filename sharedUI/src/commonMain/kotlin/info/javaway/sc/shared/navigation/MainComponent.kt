@@ -72,7 +72,23 @@ class MainComponent(
                 }
             )
             is Config.Profile -> Child.Profile(
-                onLogout = onLogout
+                onLogout = onLogout,
+                onMyProductsClick = {
+                    navigation.push(Config.MyProducts)
+                }
+            )
+            is Config.MyProducts -> Child.MyProducts(
+                onBack = { navigation.pop() },
+                onProductClick = { productId ->
+                    navigation.push(Config.ProductDetail(productId))
+                },
+                onEditProduct = { productId ->
+                    // TODO: Этап 13.3 - EditProductScreen
+                    println("Edit product clicked: $productId")
+                },
+                onCreateProduct = {
+                    navigation.push(Config.CreateProduct)
+                }
             )
         }
 
@@ -121,7 +137,15 @@ class MainComponent(
         ) : Child()
 
         data class Profile(
-            val onLogout: () -> Unit
+            val onLogout: () -> Unit,
+            val onMyProductsClick: () -> Unit
+        ) : Child()
+
+        data class MyProducts(
+            val onBack: () -> Unit,
+            val onProductClick: (Long) -> Unit,
+            val onEditProduct: (Long) -> Unit,
+            val onCreateProduct: () -> Unit
         ) : Child()
     }
 
@@ -147,5 +171,8 @@ class MainComponent(
 
         @Serializable
         data object Profile : Config
+
+        @Serializable
+        data object MyProducts : Config
     }
 }

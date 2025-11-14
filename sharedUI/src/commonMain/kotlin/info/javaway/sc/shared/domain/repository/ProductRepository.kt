@@ -74,4 +74,9 @@ interface ProductRepository {
      * Удалить товар из избранного
      */
     suspend fun removeFromFavorites(productId: Long): Result<Unit>
+
+    /**
+     * Удалить товар
+     */
+    suspend fun deleteProduct(productId: Long): Result<Unit>
 }
