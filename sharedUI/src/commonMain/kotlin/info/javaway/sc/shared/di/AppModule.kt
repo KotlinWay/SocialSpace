@@ -20,6 +20,8 @@ import info.javaway.sc.shared.presentation.screens.products.ProductDetailViewMod
 import info.javaway.sc.shared.presentation.screens.products.ProductListViewModel
 import info.javaway.sc.shared.presentation.screens.profile.ProfileViewModel
 import info.javaway.sc.shared.presentation.screens.services.CreateServiceViewModel
+import info.javaway.sc.shared.presentation.screens.services.EditServiceViewModel
+import info.javaway.sc.shared.presentation.screens.services.MyServicesViewModel
 import info.javaway.sc.shared.presentation.screens.services.ServiceDetailViewModel
 import info.javaway.sc.shared.presentation.screens.services.ServiceListViewModel
 import org.koin.core.module.dsl.factoryOf
@@ -71,6 +73,9 @@ val viewModelModule = module {
     // CreateServiceViewModel для создания услуги
     factoryOf(::CreateServiceViewModel)
 
+    // MyServicesViewModel для списка своих услуг
+    factoryOf(::MyServicesViewModel)
+
     // ProductDetailViewModel с параметром productId
     factory { (productId: Long) ->
         ProductDetailViewModel(
@@ -96,6 +101,16 @@ val viewModelModule = module {
             serviceRepository = get(),
             authRepository = get(),
             serviceId = serviceId
+        )
+    }
+
+    // EditServiceViewModel с параметром serviceId
+    factory { (serviceId: Long) ->
+        EditServiceViewModel(
+            serviceId = serviceId,
+            serviceRepository = get(),
+            apiClient = get(),
+            categoryRepository = get()
         )
     }
 }

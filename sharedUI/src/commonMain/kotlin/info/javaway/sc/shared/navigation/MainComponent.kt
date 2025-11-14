@@ -64,7 +64,10 @@ class MainComponent(
             )
             is Config.ServiceDetail -> Child.ServiceDetail(
                 serviceId = config.serviceId,
-                onBack = { navigation.pop() }
+                onBack = { navigation.pop() },
+                onEditService = { serviceId ->
+                    navigation.push(Config.EditService(serviceId))
+                }
             )
             is Config.CreateService -> Child.CreateService(
                 onBack = { navigation.pop() },
@@ -78,6 +81,9 @@ class MainComponent(
                 onLogout = onLogout,
                 onMyProductsClick = {
                     navigation.push(Config.MyProducts)
+                },
+                onMyServicesClick = {
+                    navigation.push(Config.MyServices)
                 }
             )
             is Config.MyProducts -> Child.MyProducts(
@@ -99,6 +105,27 @@ class MainComponent(
                     // После обновления товара возвращаемся и открываем детали
                     navigation.pop()
                     navigation.push(Config.ProductDetail(productId))
+                }
+            )
+            is Config.MyServices -> Child.MyServices(
+                onBack = { navigation.pop() },
+                onServiceClick = { serviceId ->
+                    navigation.push(Config.ServiceDetail(serviceId))
+                },
+                onEditService = { serviceId ->
+                    navigation.push(Config.EditService(serviceId))
+                },
+                onCreateService = {
+                    navigation.push(Config.CreateService)
+                }
+            )
+            is Config.EditService -> Child.EditService(
+                serviceId = config.serviceId,
+                onBack = { navigation.pop() },
+                onSuccess = { serviceId ->
+                    // После обновления услуги возвращаемся и открываем детали
+                    navigation.pop()
+                    navigation.push(Config.ServiceDetail(serviceId))
                 }
             )
         }
@@ -140,7 +167,8 @@ class MainComponent(
 
         data class ServiceDetail(
             val serviceId: Long,
-            val onBack: () -> Unit
+            val onBack: () -> Unit,
+            val onEditService: (Long) -> Unit
         ) : Child()
 
         data class CreateService(
@@ -150,7 +178,8 @@ class MainComponent(
 
         data class Profile(
             val onLogout: () -> Unit,
-            val onMyProductsClick: () -> Unit
+            val onMyProductsClick: () -> Unit,
+            val onMyServicesClick: () -> Unit
         ) : Child()
 
         data class MyProducts(
@@ -162,6 +191,19 @@ class MainComponent(
 
         data class EditProduct(
             val productId: Long,
+            val onBack: () -> Unit,
+            val onSuccess: (Long) -> Unit
+        ) : Child()
+
+        data class MyServices(
+            val onBack: () -> Unit,
+            val onServiceClick: (Long) -> Unit,
+            val onEditService: (Long) -> Unit,
+            val onCreateService: () -> Unit
+        ) : Child()
+
+        data class EditService(
+            val serviceId: Long,
             val onBack: () -> Unit,
             val onSuccess: (Long) -> Unit
         ) : Child()
@@ -195,5 +237,11 @@ class MainComponent(
 
         @Serializable
         data class EditProduct(val productId: Long) : Config
+
+        @Serializable
+        data object MyServices : Config
+
+        @Serializable
+        data class EditService(val serviceId: Long) : Config
     }
 }

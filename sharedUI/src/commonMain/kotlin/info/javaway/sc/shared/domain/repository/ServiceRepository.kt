@@ -33,4 +33,5 @@ interface ServiceRepository {
 
     suspend fun getService(serviceId: Long): kotlin.Result<Service>
     suspend fun getMyServices(): kotlin.Result<List<Service>>
+    suspend fun deleteService(serviceId: Long): kotlin.Result<Unit>
 }

@@ -62,6 +62,7 @@ fun ServiceDetailScreen(
     serviceId: Long,
     onBack: () -> Unit,
     onCallProvider: (String) -> Unit,
+    onEditService: ((Long) -> Unit)? = null,
     viewModel: ServiceDetailViewModel = koinInject { parametersOf(serviceId) }
 ) {
     val state = viewModel.state
@@ -93,10 +94,9 @@ fun ServiceDetailScreen(
                         service = state.service,
                         isOwner = state.isOwner,
                         onCallProvider = onCallProvider,
-                        onEditService = {
-                            // TODO: навигация на EditServiceScreen
-                            println("Edit service: ${state.service.id}")
-                        }
+                        onEditService = if (onEditService != null) {
+                            { onEditService(state.service.id) }
+                        } else null
                     )
                 }
 
@@ -119,7 +119,7 @@ private fun ServiceDetailContent(
     service: Service,
     isOwner: Boolean,
     onCallProvider: (String) -> Unit,
-    onEditService: () -> Unit
+    onEditService: (() -> Unit)?
 ) {
     Column(
         modifier = Modifier
@@ -175,7 +175,7 @@ private fun ServiceDetailContent(
             }
 
             // Кнопка "Редактировать" для владельца
-            if (isOwner) {
+            if (isOwner && onEditService != null) {
                 OutlinedButton(
                     onClick = onEditService,
                     modifier = Modifier.fillMaxWidth()
