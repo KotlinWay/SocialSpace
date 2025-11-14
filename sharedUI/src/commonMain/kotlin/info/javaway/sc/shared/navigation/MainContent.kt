@@ -23,9 +23,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
-import info.javaway.sc.shared.presentation.screens.home.HomeScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductDetailScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductListScreen
+import info.javaway.sc.shared.presentation.screens.profile.ProfileScreen
 import info.javaway.sc.shared.presentation.screens.services.ServiceDetailScreen
 import info.javaway.sc.shared.presentation.screens.services.ServiceListScreen
 
@@ -108,8 +108,7 @@ fun MainContent(
                         )
                     }
                     is MainComponent.Child.Profile -> {
-                        // Переиспользуем HomeScreen для профиля (временно)
-                        HomeScreen(onLogout = child.onLogout)
+                        ProfileScreen(onLogout = child.onLogout)
                     }
                 }
             }

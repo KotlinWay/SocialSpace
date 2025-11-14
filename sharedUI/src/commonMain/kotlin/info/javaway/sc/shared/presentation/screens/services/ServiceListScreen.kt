@@ -193,7 +193,7 @@ private fun EmptyState(
                 style = MaterialTheme.typography.titleLarge
             )
             Text(
-                text = "Будьте первым, кто разместит объявление об услуге!",
+                text = "Будьте первым, кто разместит объявление!",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
