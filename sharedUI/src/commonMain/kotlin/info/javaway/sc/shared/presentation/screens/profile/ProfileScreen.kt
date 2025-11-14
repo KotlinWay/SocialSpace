@@ -16,10 +16,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -38,11 +38,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
-import info.javaway.sc.api.models.User
+import info.javaway.sc.shared.domain.models.User
 import org.koin.compose.koinInject
 
 /**
@@ -119,57 +117,20 @@ private fun ProfileContent(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Аватар пользователя
-        if (user.avatar != null) {
-            SubcomposeAsyncImage(
-                model = user.avatar,
-                contentDescription = "Аватар ${user.name}",
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop,
-                loading = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(40.dp)
-                        )
-                    }
-                },
-                error = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = user.name.firstOrNull()?.uppercase() ?: "?",
-                            style = MaterialTheme.typography.displayLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
+        // Аватар пользователя (заглушка с первой буквой имени)
+        // TODO: Добавить загрузку аватара когда будет реализована загрузка изображений
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = user.name.firstOrNull()?.uppercase() ?: "?",
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
-        } else {
-            // Заглушка аватара с первой буквой имени
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = user.name.firstOrNull()?.uppercase() ?: "?",
-                    style = MaterialTheme.typography.displayLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -202,21 +163,21 @@ private fun ProfileContent(
                     value = user.phone
                 )
 
-                if (user.email != null) {
+                user.email?.let { email ->
                     Spacer(modifier = Modifier.height(12.dp))
                     InfoRow(
                         icon = Icons.Default.Email,
                         label = "Email",
-                        value = user.email
+                        value = email
                     )
                 }
 
-                if (user.bio != null) {
+                user.bio?.let { bio ->
                     Spacer(modifier = Modifier.height(12.dp))
                     InfoRow(
                         icon = Icons.Default.Info,
                         label = "О себе",
-                        value = user.bio
+                        value = bio
                     )
                 }
             }
@@ -252,7 +213,7 @@ private fun ProfileContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
-                imageVector = Icons.Default.List,
+                imageVector = Icons.AutoMirrored.Filled.List,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp)
             )

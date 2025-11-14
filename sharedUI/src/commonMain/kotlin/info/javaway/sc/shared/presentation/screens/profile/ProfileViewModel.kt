@@ -3,8 +3,8 @@ package info.javaway.sc.shared.presentation.screens.profile
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import info.javaway.sc.api.models.User
 import info.javaway.sc.shared.data.local.TokenManager
+import info.javaway.sc.shared.domain.models.User
 import info.javaway.sc.shared.domain.repository.AuthRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -56,7 +56,7 @@ class ProfileViewModel(
      */
     fun logout() {
         Napier.d("Logging out user", tag = "ProfileViewModel")
-        tokenManager.clearToken()
+        tokenManager.clear()
     }
 
     /**
