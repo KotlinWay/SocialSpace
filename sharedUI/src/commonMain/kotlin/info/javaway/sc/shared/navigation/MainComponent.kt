@@ -42,9 +42,12 @@ class MainComponent(
             )
             is Config.Services -> Child.Services(
                 onServiceClick = { serviceId ->
-                    // TODO: Добавить навигацию на детальную страницу услуги
-                    // navigation.push(Config.ServiceDetail(serviceId))
+                    navigation.push(Config.ServiceDetail(serviceId))
                 }
+            )
+            is Config.ServiceDetail -> Child.ServiceDetail(
+                serviceId = config.serviceId,
+                onBack = { navigation.pop() }
             )
             is Config.Profile -> Child.Profile(
                 onLogout = onLogout
@@ -78,6 +81,11 @@ class MainComponent(
             val onServiceClick: (Long) -> Unit
         ) : Child()
 
+        data class ServiceDetail(
+            val serviceId: Long,
+            val onBack: () -> Unit
+        ) : Child()
+
         data class Profile(
             val onLogout: () -> Unit
         ) : Child()
@@ -93,6 +101,9 @@ class MainComponent(
 
         @Serializable
         data object Services : Config
+
+        @Serializable
+        data class ServiceDetail(val serviceId: Long) : Config
 
         @Serializable
         data object Profile : Config
