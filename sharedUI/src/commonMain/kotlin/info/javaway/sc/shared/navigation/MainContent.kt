@@ -23,11 +23,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import info.javaway.sc.shared.presentation.screens.products.CreateProductScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductDetailScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductListScreen
 import info.javaway.sc.shared.presentation.screens.profile.ProfileScreen
 import info.javaway.sc.shared.presentation.screens.services.ServiceDetailScreen
 import info.javaway.sc.shared.presentation.screens.services.ServiceListScreen
+import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 
 /**
  * Main контент с Bottom Navigation
@@ -79,7 +82,8 @@ fun MainContent(
                 when (val child = it.instance) {
                     is MainComponent.Child.Products -> {
                         ProductListScreen(
-                            onProductClick = child.onProductClick
+                            onProductClick = child.onProductClick,
+                            onCreateProduct = child.onCreateProduct
                         )
                     }
                     is MainComponent.Child.ProductDetail -> {
@@ -92,9 +96,18 @@ fun MainContent(
                             }
                         )
                     }
+                    is MainComponent.Child.CreateProduct -> {
+                        val viewModel = koinInject<info.javaway.sc.shared.presentation.screens.products.CreateProductViewModel>()
+                        CreateProductScreen(
+                            viewModel = viewModel,
+                            onBack = child.onBack,
+                            onSuccess = child.onSuccess
+                        )
+                    }
                     is MainComponent.Child.Services -> {
                         ServiceListScreen(
-                            onServiceClick = child.onServiceClick
+                            onServiceClick = child.onServiceClick,
+                            onCreateService = child.onCreateService
                         )
                     }
                     is MainComponent.Child.ServiceDetail -> {
@@ -106,6 +119,10 @@ fun MainContent(
                                 println("Call provider: $phone")
                             }
                         )
+                    }
+                    is MainComponent.Child.CreateService -> {
+                        // TODO: CreateServiceScreen после реализации CreateServiceViewModel
+                        PlaceholderScreen("Создание услуги (в разработке)")
                     }
                     is MainComponent.Child.Profile -> {
                         ProfileScreen(onLogout = child.onLogout)

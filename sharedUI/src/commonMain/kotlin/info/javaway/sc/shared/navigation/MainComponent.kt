@@ -34,20 +34,42 @@ class MainComponent(
             is Config.Products -> Child.Products(
                 onProductClick = { productId ->
                     navigation.push(Config.ProductDetail(productId))
+                },
+                onCreateProduct = {
+                    navigation.push(Config.CreateProduct)
                 }
             )
             is Config.ProductDetail -> Child.ProductDetail(
                 productId = config.productId,
                 onBack = { navigation.pop() }
             )
+            is Config.CreateProduct -> Child.CreateProduct(
+                onBack = { navigation.pop() },
+                onSuccess = { productId ->
+                    // После создания товара возвращаемся на список и открываем детали
+                    navigation.pop()
+                    navigation.push(Config.ProductDetail(productId))
+                }
+            )
             is Config.Services -> Child.Services(
                 onServiceClick = { serviceId ->
                     navigation.push(Config.ServiceDetail(serviceId))
+                },
+                onCreateService = {
+                    navigation.push(Config.CreateService)
                 }
             )
             is Config.ServiceDetail -> Child.ServiceDetail(
                 serviceId = config.serviceId,
                 onBack = { navigation.pop() }
+            )
+            is Config.CreateService -> Child.CreateService(
+                onBack = { navigation.pop() },
+                onSuccess = { serviceId ->
+                    // После создания услуги возвращаемся на список и открываем детали
+                    navigation.pop()
+                    navigation.push(Config.ServiceDetail(serviceId))
+                }
             )
             is Config.Profile -> Child.Profile(
                 onLogout = onLogout
@@ -69,7 +91,8 @@ class MainComponent(
 
     sealed class Child {
         data class Products(
-            val onProductClick: (Long) -> Unit
+            val onProductClick: (Long) -> Unit,
+            val onCreateProduct: () -> Unit
         ) : Child()
 
         data class ProductDetail(
@@ -77,13 +100,24 @@ class MainComponent(
             val onBack: () -> Unit
         ) : Child()
 
+        data class CreateProduct(
+            val onBack: () -> Unit,
+            val onSuccess: (Long) -> Unit
+        ) : Child()
+
         data class Services(
-            val onServiceClick: (Long) -> Unit
+            val onServiceClick: (Long) -> Unit,
+            val onCreateService: () -> Unit
         ) : Child()
 
         data class ServiceDetail(
             val serviceId: Long,
             val onBack: () -> Unit
+        ) : Child()
+
+        data class CreateService(
+            val onBack: () -> Unit,
+            val onSuccess: (Long) -> Unit
         ) : Child()
 
         data class Profile(
@@ -100,10 +134,16 @@ class MainComponent(
         data class ProductDetail(val productId: Long) : Config
 
         @Serializable
+        data object CreateProduct : Config
+
+        @Serializable
         data object Services : Config
 
         @Serializable
         data class ServiceDetail(val serviceId: Long) : Config
+
+        @Serializable
+        data object CreateService : Config
 
         @Serializable
         data object Profile : Config

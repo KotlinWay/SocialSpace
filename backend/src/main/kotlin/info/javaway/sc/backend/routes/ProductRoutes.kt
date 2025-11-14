@@ -405,7 +405,45 @@ fun Route.productRoutes(
                     )
 
                     if (product != null) {
-                        call.respond(HttpStatusCode.Created, product)
+                        // Получаем информацию о пользователе
+                        val user = userRepository.findById(userId)
+                        if (user == null) {
+                            call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponse("USER_NOT_FOUND", "Пользователь не найден")
+                            )
+                            return@post
+                        }
+
+                        // Получаем информацию о категории (уже проверяли выше, но на всякий случай)
+                        val categoryInfo = categoryRepository.findById(product.categoryId)
+                        if (categoryInfo == null) {
+                            call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponse("CATEGORY_NOT_FOUND", "Категория не найдена")
+                            )
+                            return@post
+                        }
+
+                        val response = ProductResponse(
+                            product = product,
+                            user = UserPublicInfo(
+                                id = user.id,
+                                name = user.name,
+                                avatar = user.avatar,
+                                phone = user.phone,
+                                rating = user.rating,
+                                isVerified = user.isVerified
+                            ),
+                            category = CategoryInfo(
+                                id = categoryInfo.id,
+                                name = categoryInfo.name,
+                                icon = categoryInfo.icon
+                            ),
+                            isFavorite = false
+                        )
+
+                        call.respond(HttpStatusCode.Created, response)
                     } else {
                         call.respond(
                             HttpStatusCode.InternalServerError,
@@ -514,7 +552,48 @@ fun Route.productRoutes(
                     )
 
                     if (updatedProduct != null) {
-                        call.respond(HttpStatusCode.OK, updatedProduct)
+                        // Получаем информацию о пользователе
+                        val user = userRepository.findById(updatedProduct.userId)
+                        if (user == null) {
+                            call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponse("USER_NOT_FOUND", "Пользователь не найден")
+                            )
+                            return@put
+                        }
+
+                        // Получаем информацию о категории
+                        val categoryInfo = categoryRepository.findById(updatedProduct.categoryId)
+                        if (categoryInfo == null) {
+                            call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponse("CATEGORY_NOT_FOUND", "Категория не найдена")
+                            )
+                            return@put
+                        }
+
+                        // Проверяем, в избранном ли товар
+                        val isFavorite = productRepository.isFavorite(userId, productId)
+
+                        val response = ProductResponse(
+                            product = updatedProduct,
+                            user = UserPublicInfo(
+                                id = user.id,
+                                name = user.name,
+                                avatar = user.avatar,
+                                phone = user.phone,
+                                rating = user.rating,
+                                isVerified = user.isVerified
+                            ),
+                            category = CategoryInfo(
+                                id = categoryInfo.id,
+                                name = categoryInfo.name,
+                                icon = categoryInfo.icon
+                            ),
+                            isFavorite = isFavorite
+                        )
+
+                        call.respond(HttpStatusCode.OK, response)
                     } else {
                         call.respond(
                             HttpStatusCode.NotFound,

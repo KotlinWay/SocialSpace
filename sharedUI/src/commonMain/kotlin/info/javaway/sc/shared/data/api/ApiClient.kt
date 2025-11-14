@@ -174,6 +174,101 @@ class ApiClient(
         httpClient.get("/api/services/my").body()
     }
 
+    suspend fun createService(request: CreateServiceRequest): Result<ServiceResponse> = handleRequest {
+        httpClient.post("/api/services") {
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun updateService(serviceId: Long, request: UpdateServiceRequest): Result<ServiceResponse> = handleRequest {
+        httpClient.put("/api/services/$serviceId") {
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun deleteService(serviceId: Long): Result<SuccessResponse> = handleRequest {
+        httpClient.delete("/api/services/$serviceId").body()
+    }
+
+    // ==================== PRODUCTS CREATE/UPDATE/DELETE ====================
+
+    suspend fun createProduct(request: CreateProductRequest): Result<ProductResponse> = handleRequest {
+        httpClient.post("/api/products") {
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun updateProduct(productId: Long, request: UpdateProductRequest): Result<ProductResponse> = handleRequest {
+        httpClient.put("/api/products/$productId") {
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun deleteProduct(productId: Long): Result<SuccessResponse> = handleRequest {
+        httpClient.delete("/api/products/$productId").body()
+    }
+
+    // ==================== FILE UPLOAD ====================
+
+    /**
+     * Загрузка изображения на сервер
+     * @param imageBytes Байты изображения
+     * @param fileName Имя файла
+     * @param mimeType MIME тип (image/jpeg, image/png и т.д.)
+     * @param type Тип изображения (avatar, product, service)
+     * @return URL загруженного изображения
+     */
+    suspend fun uploadImage(
+        imageBytes: ByteArray,
+        fileName: String,
+        mimeType: String,
+        type: String
+    ): Result<FileUploadResponse> = handleRequest {
+        httpClient.post("/api/upload") {
+            parameter("type", type)
+            setBody(
+                MultiPartFormDataContent(
+                    formData {
+                        append("file", imageBytes, Headers.build {
+                            append(HttpHeaders.ContentType, mimeType)
+                            append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                        })
+                    }
+                )
+            )
+        }.body()
+    }
+
+    /**
+     * Загрузка нескольких изображений
+     * @param images Список изображений для загрузки
+     * @param type Тип изображений (product, service)
+     * @return Список URL загруженных изображений
+     */
+    suspend fun uploadImages(
+        images: List<Triple<ByteArray, String, String>>, // (bytes, fileName, mimeType)
+        type: String
+    ): Result<List<String>> {
+        return try {
+            val urls = mutableListOf<String>()
+            for ((bytes, fileName, mimeType) in images) {
+                val result = uploadImage(bytes, fileName, mimeType, type)
+                if (result.isSuccess) {
+                    val uploadResponse = result.getOrNull()!!
+                    val url = uploadResponse.url
+                        ?: return Result.failure(IllegalStateException("Upload response missing URL"))
+                    urls.add(url)
+                } else {
+                    val exception = result.exceptionOrNull()!!
+                    return Result.failure(exception)
+                }
+            }
+            Result.success(urls)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // ==================== ERROR HANDLING ====================
 
     private suspend fun <T> handleRequest(block: suspend () -> T): Result<T> {
