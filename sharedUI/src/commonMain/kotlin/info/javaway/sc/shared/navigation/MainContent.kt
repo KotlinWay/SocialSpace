@@ -27,6 +27,7 @@ import info.javaway.sc.shared.presentation.screens.products.CreateProductScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductDetailScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductListScreen
 import info.javaway.sc.shared.presentation.screens.profile.ProfileScreen
+import info.javaway.sc.shared.presentation.screens.services.CreateServiceScreen
 import info.javaway.sc.shared.presentation.screens.services.ServiceDetailScreen
 import info.javaway.sc.shared.presentation.screens.services.ServiceListScreen
 import org.koin.compose.koinInject
@@ -121,38 +122,18 @@ fun MainContent(
                         )
                     }
                     is MainComponent.Child.CreateService -> {
-                        // TODO: CreateServiceScreen после реализации CreateServiceViewModel
-                        PlaceholderScreen("Создание услуги (в разработке)")
+                        val viewModel = koinInject<info.javaway.sc.shared.presentation.screens.services.CreateServiceViewModel>()
+                        CreateServiceScreen(
+                            viewModel = viewModel,
+                            onBack = child.onBack,
+                            onSuccess = child.onSuccess
+                        )
                     }
                     is MainComponent.Child.Profile -> {
                         ProfileScreen(onLogout = child.onLogout)
                     }
                 }
             }
-        }
-    }
-}
-
-/**
- * Временный экран-заглушка
- */
-@Composable
-private fun PlaceholderScreen(title: String) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        androidx.compose.foundation.layout.Column(
-            modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
-            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Экран: $title",
-                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium
-            )
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "(В разработке)",
-                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
-            )
         }
     }
 }
