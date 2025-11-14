@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
@@ -418,6 +419,9 @@ private fun ExistingImageCard(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
+                imageLoader = ImageLoader.Builder(context)
                     .crossfade(true)
                     .build(),
                 contentDescription = null,
