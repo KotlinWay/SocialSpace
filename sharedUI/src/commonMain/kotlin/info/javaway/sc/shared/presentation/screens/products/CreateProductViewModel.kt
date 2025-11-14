@@ -185,9 +185,9 @@ class CreateProductViewModel(
 
                     val createResult = apiClient.createProduct(request)
                     if (createResult.isSuccess) {
-                        val product = createResult.getOrNull()!!
-                        _state.value = CreateProductState.Success(product.id)
-                        Napier.d("CreateProductViewModel: Product created successfully with id: ${product.id}")
+                        val response = createResult.getOrNull()!!
+                        _state.value = CreateProductState.Success(response.product.id)
+                        Napier.d("CreateProductViewModel: Product created successfully with id: ${response.product.id}")
                     } else {
                         val exception = createResult.exceptionOrNull()!!
                         _state.value = CreateProductState.Error(
