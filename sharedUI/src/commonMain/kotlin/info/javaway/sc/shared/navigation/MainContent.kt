@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import info.javaway.sc.shared.presentation.screens.products.CreateProductScreen
+import info.javaway.sc.shared.presentation.screens.products.MyProductsScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductDetailScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductListScreen
 import info.javaway.sc.shared.presentation.screens.profile.ProfileScreen
@@ -130,7 +131,18 @@ fun MainContent(
                         )
                     }
                     is MainComponent.Child.Profile -> {
-                        ProfileScreen(onLogout = child.onLogout)
+                        ProfileScreen(
+                            onLogout = child.onLogout,
+                            onMyProductsClick = child.onMyProductsClick
+                        )
+                    }
+                    is MainComponent.Child.MyProducts -> {
+                        MyProductsScreen(
+                            onBack = child.onBack,
+                            onProductClick = child.onProductClick,
+                            onEditProduct = child.onEditProduct,
+                            onCreateProduct = child.onCreateProduct
+                        )
                     }
                 }
             }

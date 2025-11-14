@@ -50,6 +50,7 @@ import org.koin.compose.koinInject
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
+    onMyProductsClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = koinInject()
 ) {
@@ -87,7 +88,8 @@ fun ProfileScreen(
                         onLogout = {
                             viewModel.logout()
                             onLogout()
-                        }
+                        },
+                        onMyProductsClick = onMyProductsClick
                     )
                 }
                 is ProfileState.Error -> {
@@ -108,6 +110,7 @@ fun ProfileScreen(
 private fun ProfileContent(
     user: User,
     onLogout: () -> Unit,
+    onMyProductsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -204,12 +207,9 @@ private fun ProfileContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Кнопка "Мои объявления" (TODO)
+        // Кнопка "Мои объявления"
         OutlinedButton(
-            onClick = {
-                // TODO: Навигация на MyProductsScreen
-                println("My products clicked")
-            },
+            onClick = onMyProductsClick,
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(

@@ -142,6 +142,17 @@ class ProductRepositoryImpl(
         )
     }
 
+    override suspend fun deleteProduct(productId: Long): kotlin.Result<Unit> {
+        return apiClient.deleteProduct(productId).fold(
+            onSuccess = {
+                kotlin.Result.success(Unit)
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
+    }
+
     // Мапперы Domain → API для параметров фильтров
     private fun ProductStatus.toApi(): ApiProductStatus {
         return when (this) {
