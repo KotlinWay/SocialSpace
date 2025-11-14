@@ -41,32 +41,43 @@ fun CategorySelectorField(
         categories.filter { it.type == categoryType }
     }
 
-    OutlinedTextField(
-        value = selectedCategory?.name ?: "",
-        onValueChange = { /* Read-only */ },
-        label = { Text("Категория") },
-        placeholder = { Text("Выберите категорию") },
-        readOnly = true,
-        enabled = enabled,
-        leadingIcon = {
-            selectedCategory?.icon?.let { icon ->
-                Text(
-                    text = icon,
-                    style = MaterialTheme.typography.titleLarge
+    Box(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = selectedCategory?.name ?: "",
+            onValueChange = { /* Read-only */ },
+            label = { Text("Категория") },
+            placeholder = { Text("Выберите категорию") },
+            readOnly = true,
+            enabled = enabled,
+            leadingIcon = {
+                selectedCategory?.icon?.let { icon ->
+                    Text(
+                        text = icon,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
+            },
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Выбрать категорию"
                 )
-            }
-        },
-        trailingIcon = {
-            Icon(
-                imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = "Выбрать категорию"
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors()
+        )
+
+        // Невидимый слой для перехвата кликов
+        if (enabled) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { showDialog = true }
             )
-        },
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled) { showDialog = true },
-        colors = OutlinedTextFieldDefaults.colors()
-    )
+        }
+    }
 
     if (showDialog) {
         CategorySelectorDialog(
