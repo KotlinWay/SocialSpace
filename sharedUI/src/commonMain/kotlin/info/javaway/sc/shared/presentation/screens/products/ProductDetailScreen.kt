@@ -65,6 +65,7 @@ fun ProductDetailScreen(
     productId: Long,
     onBack: () -> Unit,
     onCallSeller: (String) -> Unit,
+    onEditProduct: ((Long) -> Unit)? = null,
     viewModel: ProductDetailViewModel = koinInject { parametersOf(productId) }
 ) {
     val state = viewModel.state
@@ -123,9 +124,10 @@ fun ProductDetailScreen(
                         product = state.product,
                         isOwner = state.isOwner,
                         onCallSeller = onCallSeller,
-                        onEditProduct = {
-                            // TODO: навигация на EditProductScreen
-                            println("Edit product: ${state.product.id}")
+                        onEditProduct = if (state.isOwner && onEditProduct != null) {
+                            { onEditProduct(state.product.id) }
+                        } else {
+                            {}
                         }
                     )
                 }

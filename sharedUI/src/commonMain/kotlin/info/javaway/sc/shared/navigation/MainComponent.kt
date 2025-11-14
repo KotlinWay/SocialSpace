@@ -41,7 +41,10 @@ class MainComponent(
             )
             is Config.ProductDetail -> Child.ProductDetail(
                 productId = config.productId,
-                onBack = { navigation.pop() }
+                onBack = { navigation.pop() },
+                onEditProduct = { productId ->
+                    navigation.push(Config.EditProduct(productId))
+                }
             )
             is Config.CreateProduct -> Child.CreateProduct(
                 onBack = { navigation.pop() },
@@ -83,11 +86,19 @@ class MainComponent(
                     navigation.push(Config.ProductDetail(productId))
                 },
                 onEditProduct = { productId ->
-                    // TODO: Этап 13.3 - EditProductScreen
-                    println("Edit product clicked: $productId")
+                    navigation.push(Config.EditProduct(productId))
                 },
                 onCreateProduct = {
                     navigation.push(Config.CreateProduct)
+                }
+            )
+            is Config.EditProduct -> Child.EditProduct(
+                productId = config.productId,
+                onBack = { navigation.pop() },
+                onSuccess = { productId ->
+                    // После обновления товара возвращаемся и открываем детали
+                    navigation.pop()
+                    navigation.push(Config.ProductDetail(productId))
                 }
             )
         }
@@ -113,7 +124,8 @@ class MainComponent(
 
         data class ProductDetail(
             val productId: Long,
-            val onBack: () -> Unit
+            val onBack: () -> Unit,
+            val onEditProduct: (Long) -> Unit
         ) : Child()
 
         data class CreateProduct(
@@ -147,6 +159,12 @@ class MainComponent(
             val onEditProduct: (Long) -> Unit,
             val onCreateProduct: () -> Unit
         ) : Child()
+
+        data class EditProduct(
+            val productId: Long,
+            val onBack: () -> Unit,
+            val onSuccess: (Long) -> Unit
+        ) : Child()
     }
 
     @Serializable
@@ -174,5 +192,8 @@ class MainComponent(
 
         @Serializable
         data object MyProducts : Config
+
+        @Serializable
+        data class EditProduct(val productId: Long) : Config
     }
 }
