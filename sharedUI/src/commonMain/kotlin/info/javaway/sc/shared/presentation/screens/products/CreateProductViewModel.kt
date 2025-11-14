@@ -42,18 +42,18 @@ class CreateProductViewModel(
         viewModelScope.launch {
             _state.value = CreateProductState.Loading
             try {
-                when (val result = categoryRepository.getProductCategories()) {
-                    is Result.Success -> {
-                        _categories.value = result.data
-                        _state.value = CreateProductState.Form
-                        Napier.d("CreateProductViewModel: Loaded ${result.data.size} categories")
-                    }
-                    is Result.Failure -> {
-                        _state.value = CreateProductState.Error(
-                            result.exception.message ?: "Не удалось загрузить категории"
-                        )
-                        Napier.e("CreateProductViewModel: Failed to load categories", result.exception)
-                    }
+                val result = categoryRepository.getProductCategories()
+                if (result.isSuccess) {
+                    val categories = result.getOrNull()!!
+                    _categories.value = categories
+                    _state.value = CreateProductState.Form
+                    Napier.d("CreateProductViewModel: Loaded ${categories.size} categories")
+                } else {
+                    val exception = result.exceptionOrNull()!!
+                    _state.value = CreateProductState.Error(
+                        exception.message ?: "Не удалось загрузить категории"
+                    )
+                    Napier.e("CreateProductViewModel: Failed to load categories", exception)
                 }
             } catch (e: Exception) {
                 _state.value = CreateProductState.Error(e.message ?: "Неизвестная ошибка")
@@ -166,40 +166,39 @@ class CreateProductViewModel(
                     Triple(image.bytes, image.name, image.mimeType)
                 }
 
-                when (val uploadResult = apiClient.uploadImages(imagesToUpload, "product")) {
-                    is Result.Success -> {
-                        val imageUrls = uploadResult.data
-                        Napier.d("CreateProductViewModel: Uploaded images: $imageUrls")
+                val uploadResult = apiClient.uploadImages(imagesToUpload, "product")
+                if (uploadResult.isSuccess) {
+                    val imageUrls = uploadResult.getOrNull()!!
+                    Napier.d("CreateProductViewModel: Uploaded images: $imageUrls")
 
-                        // 2. Создание товара с URL изображений
-                        val request = CreateProductRequest(
-                            title = form.title,
-                            description = form.description,
-                            price = form.price.toDouble(),
-                            categoryId = form.category!!.id,
-                            condition = form.condition,
-                            images = imageUrls
-                        )
+                    // 2. Создание товара с URL изображений
+                    val request = CreateProductRequest(
+                        title = form.title,
+                        description = form.description,
+                        price = form.price.toDouble(),
+                        categoryId = form.category!!.id,
+                        condition = form.condition,
+                        images = imageUrls
+                    )
 
-                        when (val createResult = apiClient.createProduct(request)) {
-                            is Result.Success -> {
-                                _state.value = CreateProductState.Success(createResult.data.id)
-                                Napier.d("CreateProductViewModel: Product created successfully with id: ${createResult.data.id}")
-                            }
-                            is Result.Failure -> {
-                                _state.value = CreateProductState.Error(
-                                    createResult.exception.message ?: "Не удалось создать товар"
-                                )
-                                Napier.e("CreateProductViewModel: Failed to create product", createResult.exception)
-                            }
-                        }
-                    }
-                    is Result.Failure -> {
+                    val createResult = apiClient.createProduct(request)
+                    if (createResult.isSuccess) {
+                        val product = createResult.getOrNull()!!
+                        _state.value = CreateProductState.Success(product.id)
+                        Napier.d("CreateProductViewModel: Product created successfully with id: ${product.id}")
+                    } else {
+                        val exception = createResult.exceptionOrNull()!!
                         _state.value = CreateProductState.Error(
-                            uploadResult.exception.message ?: "Не удалось загрузить изображения"
+                            exception.message ?: "Не удалось создать товар"
                         )
-                        Napier.e("CreateProductViewModel: Failed to upload images", uploadResult.exception)
+                        Napier.e("CreateProductViewModel: Failed to create product", exception)
                     }
+                } else {
+                    val exception = uploadResult.exceptionOrNull()!!
+                    _state.value = CreateProductState.Error(
+                        exception.message ?: "Не удалось загрузить изображения"
+                    )
+                    Napier.e("CreateProductViewModel: Failed to upload images", exception)
                 }
             } catch (e: Exception) {
                 _state.value = CreateProductState.Error(e.message ?: "Неизвестная ошибка")

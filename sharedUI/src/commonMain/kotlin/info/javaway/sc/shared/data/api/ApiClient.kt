@@ -252,9 +252,13 @@ class ApiClient(
         return try {
             val urls = mutableListOf<String>()
             for ((bytes, fileName, mimeType) in images) {
-                when (val result = uploadImage(bytes, fileName, mimeType, type)) {
-                    is Result.Success -> urls.add(result.data.url)
-                    is Result.Failure -> return Result.failure(result.exception)
+                val result = uploadImage(bytes, fileName, mimeType, type)
+                if (result.isSuccess) {
+                    val uploadResponse = result.getOrNull()!!
+                    urls.add(uploadResponse.url)
+                } else {
+                    val exception = result.exceptionOrNull()!!
+                    return Result.failure(exception)
                 }
             }
             Result.success(urls)

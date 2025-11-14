@@ -83,6 +83,9 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.kotlinx.coroutines.android)
 
+            // Activity Compose для ImagePicker
+            implementation(libs.androidx.activityCompose)
+
             // Paging 3 Compose
             implementation(libs.paging.compose)
         }

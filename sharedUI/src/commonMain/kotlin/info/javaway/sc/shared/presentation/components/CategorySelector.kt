@@ -46,9 +46,9 @@ fun CategorySelectorField(
         readOnly = true,
         enabled = enabled,
         leadingIcon = {
-            if (selectedCategory?.icon != null) {
+            selectedCategory?.icon?.let { icon ->
                 Text(
-                    text = selectedCategory.icon,
+                    text = icon,
                     style = MaterialTheme.typography.titleLarge
                 )
             }
@@ -139,9 +139,9 @@ private fun CategoryItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Иконка категории
-            if (category.icon != null) {
+            category.icon?.let { icon ->
                 Text(
-                    text = category.icon,
+                    text = icon,
                     style = MaterialTheme.typography.titleLarge
                 )
             }
@@ -162,7 +162,7 @@ private fun CategoryItem(
             // Галочка для выбранной категории
             if (isSelected) {
                 Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                    imageVector = androidx.compose.material.icons.Icons.Default.Done,
                     contentDescription = "Выбрано",
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )

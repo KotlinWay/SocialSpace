@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -21,7 +22,7 @@ import info.javaway.sc.api.models.CategoryType
 import info.javaway.sc.api.models.ProductCondition
 import info.javaway.sc.shared.presentation.components.CategorySelectorField
 import info.javaway.sc.shared.utils.rememberImagePickerLauncher
-import org.jetbrains.skia.Image as SkiaImage
+import org.jetbrains.skia.Image as SkImage
 
 /**
  * Экран создания товара
@@ -116,6 +117,19 @@ fun CreateProductScreen(
                     onCreate = viewModel::createProduct,
                     modifier = Modifier.padding(paddingValues)
                 )
+            }
+
+            is CreateProductState.Success -> {
+                // Success обрабатывается в LaunchedEffect выше
+                // Показываем индикатор загрузки пока идет навигация
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
         }
     }
@@ -312,31 +326,61 @@ private fun ImageSelector(
             }
         } else {
             // Placeholder когда нет изображений
-            OutlinedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp),
-                onClick = if (enabled) onAddImages else {}
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+            if (enabled) {
+                OutlinedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    onClick = onAddImages
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(32.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Нажмите, чтобы добавить фото",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Нажмите, чтобы добавить фото",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            } else {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "Добавьте фото",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
@@ -363,8 +407,7 @@ private fun ImagePreviewCard(
             // Изображение
             val imageBitmap = remember(image) {
                 try {
-                    val skiaImage = SkiaImage.makeFromEncoded(image.bytes)
-                    skiaImage.asImageBitmap()
+                    SkImage.makeFromEncoded(image.bytes).toComposeImageBitmap()
                 } catch (e: Exception) {
                     null
                 }
