@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -28,6 +29,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -119,7 +121,12 @@ fun ProductDetailScreen(
                 is ProductDetailState.Success -> {
                     ProductDetailContent(
                         product = state.product,
-                        onCallSeller = onCallSeller
+                        isOwner = state.isOwner,
+                        onCallSeller = onCallSeller,
+                        onEditProduct = {
+                            // TODO: навигация на EditProductScreen
+                            println("Edit product: ${state.product.id}")
+                        }
                     )
                 }
 
@@ -140,7 +147,9 @@ fun ProductDetailScreen(
 @Composable
 private fun ProductDetailContent(
     product: Product,
-    onCallSeller: (String) -> Unit
+    isOwner: Boolean,
+    onCallSeller: (String) -> Unit,
+    onEditProduct: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -197,6 +206,22 @@ private fun ProductDetailContent(
                         text = product.description,
                         style = MaterialTheme.typography.bodyMedium
                     )
+                }
+            }
+
+            // Кнопка "Редактировать" для владельца
+            if (isOwner) {
+                OutlinedButton(
+                    onClick = onEditProduct,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Редактировать объявление")
                 }
             }
 

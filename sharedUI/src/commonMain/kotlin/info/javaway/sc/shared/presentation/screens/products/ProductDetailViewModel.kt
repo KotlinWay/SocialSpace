@@ -3,8 +3,8 @@ package info.javaway.sc.shared.presentation.screens.products
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.domain.models.Product
+import info.javaway.sc.shared.domain.repository.AuthRepository
 import info.javaway.sc.shared.domain.repository.ProductRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
  */
 class ProductDetailViewModel(
     private val productRepository: ProductRepository,
-    private val tokenManager: TokenManager,
+    private val authRepository: AuthRepository,
     private val productId: Long
 ) {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -45,13 +45,10 @@ class ProductDetailViewModel(
                     Napier.d("Product loaded successfully: ${product.title}", tag = "ProductDetailViewModel")
 
                     // Проверяем, является ли текущий пользователь владельцем товара
-                    val currentUserId = tokenManager.getToken()?.let {
-                        // TODO: извлечь userId из JWT токена (можно парсить или добавить в TokenManager)
-                        // Временно считаем что не владелец если не можем определить
-                        null
-                    }
-
+                    val currentUserId = authRepository.getUserId()
                     val isOwner = currentUserId != null && currentUserId == product.user.id
+
+                    Napier.d("Current userId: $currentUserId, Product owner: ${product.user.id}, isOwner: $isOwner", tag = "ProductDetailViewModel")
 
                     state = ProductDetailState.Success(
                         product = product,
