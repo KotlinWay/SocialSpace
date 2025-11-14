@@ -30,6 +30,8 @@ import info.javaway.sc.shared.presentation.screens.products.ProductDetailScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductListScreen
 import info.javaway.sc.shared.presentation.screens.profile.ProfileScreen
 import info.javaway.sc.shared.presentation.screens.services.CreateServiceScreen
+import info.javaway.sc.shared.presentation.screens.services.EditServiceScreen
+import info.javaway.sc.shared.presentation.screens.services.MyServicesScreen
 import info.javaway.sc.shared.presentation.screens.services.ServiceDetailScreen
 import info.javaway.sc.shared.presentation.screens.services.ServiceListScreen
 import org.koin.compose.koinInject
@@ -121,7 +123,8 @@ fun MainContent(
                             onCallProvider = { phone ->
                                 // TODO: Реализовать в Android через Intent.ACTION_DIAL
                                 println("Call provider: $phone")
-                            }
+                            },
+                            onEditService = child.onEditService
                         )
                     }
                     is MainComponent.Child.CreateService -> {
@@ -135,7 +138,8 @@ fun MainContent(
                     is MainComponent.Child.Profile -> {
                         ProfileScreen(
                             onLogout = child.onLogout,
-                            onMyProductsClick = child.onMyProductsClick
+                            onMyProductsClick = child.onMyProductsClick,
+                            onMyServicesClick = child.onMyServicesClick
                         )
                     }
                     is MainComponent.Child.MyProducts -> {
@@ -151,6 +155,24 @@ fun MainContent(
                             parametersOf(child.productId)
                         }
                         EditProductScreen(
+                            viewModel = viewModel,
+                            onBack = child.onBack,
+                            onSuccess = child.onSuccess
+                        )
+                    }
+                    is MainComponent.Child.MyServices -> {
+                        MyServicesScreen(
+                            onBack = child.onBack,
+                            onServiceClick = child.onServiceClick,
+                            onEditService = child.onEditService,
+                            onCreateService = child.onCreateService
+                        )
+                    }
+                    is MainComponent.Child.EditService -> {
+                        val viewModel = koinInject<info.javaway.sc.shared.presentation.screens.services.EditServiceViewModel> {
+                            parametersOf(child.serviceId)
+                        }
+                        EditServiceScreen(
                             viewModel = viewModel,
                             onBack = child.onBack,
                             onSuccess = child.onSuccess

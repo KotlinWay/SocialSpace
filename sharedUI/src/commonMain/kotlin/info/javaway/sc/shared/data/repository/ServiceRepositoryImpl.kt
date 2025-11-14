@@ -80,6 +80,17 @@ class ServiceRepositoryImpl(
         )
     }
 
+    override suspend fun deleteService(serviceId: Long): kotlin.Result<Unit> {
+        return apiClient.deleteService(serviceId).fold(
+            onSuccess = {
+                kotlin.Result.success(Unit)
+            },
+            onFailure = { exception ->
+                kotlin.Result.failure(exception)
+            }
+        )
+    }
+
     // Маппер Domain → API для параметров фильтра
     private fun ServiceStatus.toApi(): ApiServiceStatus {
         return when (this) {

@@ -51,6 +51,7 @@ import org.koin.compose.koinInject
 fun ProfileScreen(
     onLogout: () -> Unit,
     onMyProductsClick: () -> Unit,
+    onMyServicesClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = koinInject()
 ) {
@@ -89,7 +90,8 @@ fun ProfileScreen(
                             viewModel.logout()
                             onLogout()
                         },
-                        onMyProductsClick = onMyProductsClick
+                        onMyProductsClick = onMyProductsClick,
+                        onMyServicesClick = onMyServicesClick
                     )
                 }
                 is ProfileState.Error -> {
@@ -111,6 +113,7 @@ private fun ProfileContent(
     user: User,
     onLogout: () -> Unit,
     onMyProductsClick: () -> Unit,
+    onMyServicesClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -219,6 +222,22 @@ private fun ProfileContent(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text("Мои объявления")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Кнопка "Мои услуги"
+        OutlinedButton(
+            onClick = onMyServicesClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.List,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Мои услуги")
         }
 
         Spacer(modifier = Modifier.height(24.dp))
