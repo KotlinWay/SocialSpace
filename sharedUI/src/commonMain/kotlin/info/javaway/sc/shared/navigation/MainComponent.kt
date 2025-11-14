@@ -40,7 +40,12 @@ class MainComponent(
                 productId = config.productId,
                 onBack = { navigation.pop() }
             )
-            is Config.Services -> Child.Services
+            is Config.Services -> Child.Services(
+                onServiceClick = { serviceId ->
+                    // TODO: Добавить навигацию на детальную страницу услуги
+                    // navigation.push(Config.ServiceDetail(serviceId))
+                }
+            )
             is Config.Profile -> Child.Profile(
                 onLogout = onLogout
             )
@@ -69,7 +74,9 @@ class MainComponent(
             val onBack: () -> Unit
         ) : Child()
 
-        data object Services : Child()
+        data class Services(
+            val onServiceClick: (Long) -> Unit
+        ) : Child()
 
         data class Profile(
             val onLogout: () -> Unit

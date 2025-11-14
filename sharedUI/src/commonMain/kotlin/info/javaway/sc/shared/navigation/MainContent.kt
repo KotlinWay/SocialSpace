@@ -26,6 +26,7 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import info.javaway.sc.shared.presentation.screens.home.HomeScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductDetailScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductListScreen
+import info.javaway.sc.shared.presentation.screens.services.ServiceListScreen
 
 /**
  * Main контент с Bottom Navigation
@@ -91,8 +92,9 @@ fun MainContent(
                         )
                     }
                     is MainComponent.Child.Services -> {
-                        // TODO: Заменить на ServiceListScreen
-                        PlaceholderScreen("Услуги")
+                        ServiceListScreen(
+                            onServiceClick = child.onServiceClick
+                        )
                     }
                     is MainComponent.Child.Profile -> {
                         // Переиспользуем HomeScreen для профиля (временно)
