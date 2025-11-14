@@ -8,9 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,14 +35,16 @@ import org.koin.compose.koinInject
 @Composable
 fun ProductListScreen(
     viewModel: ProductListViewModel = koinInject(),
-    onProductClick: (Long) -> Unit = {}
+    onProductClick: (Long) -> Unit = {},
+    onCreateProduct: () -> Unit = {}
 ) {
     // Collect PagingData as LazyPagingItems
     val lazyPagingItems: LazyPagingItems<Product> = viewModel.productsFlow.collectAsLazyPagingItems()
 
     ProductListContent(
         lazyPagingItems = lazyPagingItems,
-        onProductClick = onProductClick
+        onProductClick = onProductClick,
+        onCreateProduct = onCreateProduct
     )
 }
 
@@ -47,9 +54,17 @@ fun ProductListScreen(
 @Composable
 private fun ProductListContent(
     lazyPagingItems: LazyPagingItems<Product>,
-    onProductClick: (Long) -> Unit
+    onProductClick: (Long) -> Unit,
+    onCreateProduct: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = onCreateProduct) {
+                Icon(Icons.Default.Add, contentDescription = "Создать товар")
+            }
+        }
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
         // Обработка состояний загрузки
         when {
             // Первая загрузка (loading)
@@ -122,6 +137,7 @@ private fun ProductListContent(
                     }
                 }
             }
+        }
         }
     }
 }

@@ -1314,8 +1314,113 @@ SocialSpace/
 Ни в коем случае не используй на вью слое модели из info.javaway.sc.api
 Для отображения изображений используй AsyncImage Coil
 
-**Версия документа**: 2.7
+---
+
+**🚧 Текущий этап:** Этап 12 - Создание объявлений (50% ЗАВЕРШЕНО! ✅)
+
+#### ✅ Этап 12.1: Создание товаров (CreateProductScreen) - ЗАВЕРШЕНО! 🎉
+
+**Дата**: 2025-11-14
+
+**Что реализовано:**
+
+1. ✅ **ImagePicker (expect/actual)** - multiplatform выбор изображений:
+   - `ImagePicker.kt` (commonMain) - data class SelectedImage + expect функция rememberImagePickerLauncher
+   - `ImagePicker.android.kt` (androidMain) - actual реализация через ActivityResultContracts.PickMultipleVisualMedia
+   - Поддержка до 5 изображений одновременно
+   - Автоматическое чтение ByteArray, fileName, mimeType из Uri
+
+2. ✅ **CategorySelector UI компонент**:
+   - `CategorySelectorField` - OutlinedTextField с выпадающим диалогом
+   - Фильтрация категорий по типу (PRODUCT/SERVICE)
+   - Material Design 3 дизайн с иконками категорий
+   - Переиспользуемый для товаров и услуг
+
+3. ✅ **ApiClient методы для создания и загрузки**:
+   - `uploadImage()` - загрузка одного изображения через Multipart/form-data
+   - `uploadImages()` - пакетная загрузка нескольких изображений
+   - `createProduct()` - создание товара (POST /api/products)
+   - `updateProduct()` - обновление товара (PUT /api/products/{id})
+   - `deleteProduct()` - удаление товара (DELETE /api/products/{id})
+   - `createService()` - создание услуги (POST /api/services)
+   - `updateService()` / `deleteService()` - CRUD для услуг
+
+4. ✅ **CreateProductViewModel** - ViewModel с MVI архитектурой:
+   - Состояния: Loading, Form, Creating, Success(productId), Error
+   - ProductFormState - состояние формы (title, description, price, category, condition, images)
+   - Методы обновления: updateTitle(), updateDescription(), updatePrice(), selectCategory(), selectCondition()
+   - selectImages() - добавление до 5 изображений с валидацией
+   - removeImage(index) - удаление изображения по индексу
+   - createProduct() - создание товара с валидацией и загрузкой изображений
+   - Валидация: название (1-200 символов), описание (обязательное), цена (>= 0), категория, изображения (1-5)
+
+5. ✅ **CreateProductScreen** - UI экран создания товара:
+   - Scaffold с TopAppBar (кнопка "Назад", заголовок "Новый товар")
+   - Форма с полями: название, описание, цена, категория, состояние (NEW/USED)
+   - FilterChip для выбора состояния товара
+   - ImageSelector - компонент для управления изображениями
+   - Галерея выбранных изображений с предпросмотром (Skia Image → ImageBitmap)
+   - Кнопка "Добавить фото" (max 5 изображений)
+   - Кнопка "Создать товар" с индикатором загрузки
+   - Обработка состояний: Loading, Form, Creating, Success, Error
+
+6. ✅ **Навигация CreateProduct**:
+   - Обновлен `MainComponent`: добавлены Config.CreateProduct, Child.CreateProduct
+   - Child.Products теперь имеет callback onCreateProduct
+   - После создания товара: навигация на детали товара (Config.ProductDetail)
+   - Обновлен `MainContent`: интеграция CreateProductScreen с koinInject
+
+7. ✅ **FloatingActionButton на списках**:
+   - `ProductListScreen` - FAB "+" для создания товара
+   - `ServiceListScreen` - FAB "+" для создания услуги (TODO: CreateServiceScreen)
+   - Scaffold обертка с floatingActionButton параметром
+   - Material Design 3 Icons.Default.Add
+
+8. ✅ **Koin DI**:
+   - Добавлен CreateProductViewModel в viewModelModule
+   - factoryOf(::CreateProductViewModel)
+
+**Технические детали:**
+
+- **Expect/Actual**: паттерн для multiplatform кода (ImagePicker)
+- **Multipart/form-data**: загрузка файлов через Ktor Client
+- **Skia Image**: декодирование ByteArray в ImageBitmap для предпросмотра
+- **MVI архитектура**: единое состояние экрана (sealed interface)
+- **Material Design 3**: Scaffold, OutlinedTextField, FilterChip, FloatingActionButton
+- **Валидация**: клиентская валидация перед отправкой на сервер
+- **Decompose Navigation**: push/pop для навигации
+
+**Файлы созданы:**
+- ✅ `ImagePicker.kt` (commonMain) - expect класс (43 строки)
+- ✅ `ImagePicker.android.kt` (androidMain) - actual реализация (106 строк)
+- ✅ `CategorySelector.kt` - UI компонент (180 строк)
+- ✅ `CreateProductViewModel.kt` - ViewModel (322 строки)
+- ✅ `CreateProductScreen.kt` - UI экран (485 строк)
+
+**Файлы изменены:**
+- ✅ `ApiClient.kt` - добавлены методы uploadImage(), uploadImages(), createProduct(), updateProduct(), deleteProduct(), createService(), updateService(), deleteService() (~90 новых строк)
+- ✅ `MainComponent.kt` - добавлена навигация CreateProduct и CreateService
+- ✅ `MainContent.kt` - интеграция CreateProductScreen
+- ✅ `ProductListScreen.kt` - добавлен FloatingActionButton
+- ✅ `ServiceListScreen.kt` - добавлен FloatingActionButton
+- ✅ `AppModule.kt` - добавлен CreateProductViewModel в Koin DI
+
+**User Journey:** ✅ Список товаров → FAB "+" → Форма создания → Загрузка изображений → Создание → Детали товара
+
+**TODO (следующие этапы):**
+- [ ] **CreateServiceViewModel** - аналогично CreateProductViewModel (но без condition, т.к. у услуг нет NEW/USED)
+- [ ] **CreateServiceScreen** - аналогично CreateProductScreen
+- [ ] **Интеграция CreateService** - уже готова в MainComponent (placeholder)
+- [ ] **EditProductScreen** - редактирование существующего товара
+- [ ] **EditServiceScreen** - редактирование существующей услуги
+- [ ] **MyProductsScreen** - список товаров пользователя с кнопками "Редактировать"/"Удалить"
+
+**Результат:** Создание товаров полностью готово! Пользователи могут создавать объявления с фотографиями! 🚀
+
+---
+
+**Версия документа**: 2.8
 **Дата создания**: 2025-11-09
-**Последнее обновление**: 2025-11-14 (✅ ЗАВЕРШЕНО: Этап 10.2 - Экран профиля (ProfileScreen)! Реализованы ProfileViewModel с MVI архитектурой, ProfileScreen с аватаром и контактной информацией, интеграция в MainContent, Koin DI. Bottom Navigation полностью функционален (Товары, Услуги, Профиль)! 🎉)
+**Последнее обновление**: 2025-11-14 (✅ ЗАВЕРШЕНО: Этап 12.1 - Создание товаров (CreateProductScreen)! Реализованы ImagePicker (expect/actual), CategorySelector, CreateProductViewModel, CreateProductScreen, интеграция в навигацию, FloatingActionButton, Koin DI. Пользователи могут создавать объявления о товарах с фотографиями! 🎉)
 **Автор**: Claude AI + Team
 

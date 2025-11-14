@@ -8,9 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,14 +35,16 @@ import org.koin.compose.koinInject
 @Composable
 fun ServiceListScreen(
     viewModel: ServiceListViewModel = koinInject(),
-    onServiceClick: (Long) -> Unit = {}
+    onServiceClick: (Long) -> Unit = {},
+    onCreateService: () -> Unit = {}
 ) {
     // Collect PagingData as LazyPagingItems
     val lazyPagingItems: LazyPagingItems<Service> = viewModel.servicesFlow.collectAsLazyPagingItems()
 
     ServiceListContent(
         lazyPagingItems = lazyPagingItems,
-        onServiceClick = onServiceClick
+        onServiceClick = onServiceClick,
+        onCreateService = onCreateService
     )
 }
 
@@ -47,9 +54,17 @@ fun ServiceListScreen(
 @Composable
 private fun ServiceListContent(
     lazyPagingItems: LazyPagingItems<Service>,
-    onServiceClick: (Long) -> Unit
+    onServiceClick: (Long) -> Unit,
+    onCreateService: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = onCreateService) {
+                Icon(Icons.Default.Add, contentDescription = "Создать услугу")
+            }
+        }
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
         // Обработка состояний загрузки
         when {
             // Первая загрузка (loading)
@@ -122,6 +137,7 @@ private fun ServiceListContent(
                     }
                 }
             }
+        }
         }
     }
 }
