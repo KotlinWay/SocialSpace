@@ -4,6 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -55,7 +58,7 @@ fun CategorySelectorField(
         },
         trailingIcon = {
             Icon(
-                imageVector = androidx.compose.material.icons.Icons.Default.ArrowDropDown,
+                imageVector = Icons.Default.ArrowDropDown,
                 contentDescription = "Выбрать категорию"
             )
         },
@@ -162,7 +165,7 @@ private fun CategoryItem(
             // Галочка для выбранной категории
             if (isSelected) {
                 Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.Done,
+                    imageVector = Icons.Default.Done,
                     contentDescription = "Выбрано",
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )

@@ -55,7 +55,7 @@ class ProductDetailViewModel(
 
                     state = ProductDetailState.Success(
                         product = product,
-                        isFavorite = false, // TODO: проверить isFavorite через API
+                        isFavorite = product.isFavorite, // TODO: проверить isFavorite через API
                         isOwner = isOwner
                     )
                 }
