@@ -21,11 +21,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -89,7 +91,12 @@ fun ServiceDetailScreen(
                 is ServiceDetailState.Success -> {
                     ServiceDetailContent(
                         service = state.service,
-                        onCallProvider = onCallProvider
+                        isOwner = state.isOwner,
+                        onCallProvider = onCallProvider,
+                        onEditService = {
+                            // TODO: навигация на EditServiceScreen
+                            println("Edit service: ${state.service.id}")
+                        }
                     )
                 }
 
@@ -110,7 +117,9 @@ fun ServiceDetailScreen(
 @Composable
 private fun ServiceDetailContent(
     service: Service,
-    onCallProvider: (String) -> Unit
+    isOwner: Boolean,
+    onCallProvider: (String) -> Unit,
+    onEditService: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -162,6 +171,22 @@ private fun ServiceDetailContent(
                         text = service.description,
                         style = MaterialTheme.typography.bodyMedium
                     )
+                }
+            }
+
+            // Кнопка "Редактировать" для владельца
+            if (isOwner) {
+                OutlinedButton(
+                    onClick = onEditService,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Редактировать объявление")
                 }
             }
 

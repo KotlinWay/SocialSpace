@@ -70,7 +70,7 @@ val viewModelModule = module {
     factory { (productId: Long) ->
         ProductDetailViewModel(
             productRepository = get(),
-            tokenManager = get(),
+            authRepository = get(),
             productId = productId
         )
     }
@@ -79,7 +79,7 @@ val viewModelModule = module {
     factory { (serviceId: Long) ->
         ServiceDetailViewModel(
             serviceRepository = get(),
-            tokenManager = get(),
+            authRepository = get(),
             serviceId = serviceId
         )
     }

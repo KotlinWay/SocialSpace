@@ -3,8 +3,8 @@ package info.javaway.sc.shared.presentation.screens.services
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.domain.models.Service
+import info.javaway.sc.shared.domain.repository.AuthRepository
 import info.javaway.sc.shared.domain.repository.ServiceRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
  */
 class ServiceDetailViewModel(
     private val serviceRepository: ServiceRepository,
-    private val tokenManager: TokenManager,
+    private val authRepository: AuthRepository,
     private val serviceId: Long
 ) {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -45,13 +45,10 @@ class ServiceDetailViewModel(
                     Napier.d("Service loaded successfully: ${service.title}", tag = "ServiceDetailViewModel")
 
                     // Проверяем, является ли текущий пользователь владельцем услуги
-                    val currentUserId = tokenManager.getToken()?.let {
-                        // TODO: извлечь userId из JWT токена (можно парсить или добавить в TokenManager)
-                        // Временно считаем что не владелец если не можем определить
-                        null
-                    }
-
+                    val currentUserId = authRepository.getUserId()
                     val isOwner = currentUserId != null && currentUserId == service.user.id
+
+                    Napier.d("Current userId: $currentUserId, Service owner: ${service.user.id}, isOwner: $isOwner", tag = "ServiceDetailViewModel")
 
                     state = ServiceDetailState.Success(
                         service = service,
