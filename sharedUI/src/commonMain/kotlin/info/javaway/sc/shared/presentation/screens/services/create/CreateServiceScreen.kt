@@ -1,4 +1,4 @@
-package info.javaway.sc.shared.presentation.screens.services
+package info.javaway.sc.shared.presentation.screens.services.create
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,8 +12,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import info.javaway.sc.shared.domain.models.Category
 import info.javaway.sc.shared.domain.models.CategoryType
 import info.javaway.sc.shared.presentation.components.CategorySelectorField
+import info.javaway.sc.shared.utils.SelectedImage
 import info.javaway.sc.shared.utils.rememberImagePickerLauncher
 
 /**
@@ -22,17 +24,17 @@ import info.javaway.sc.shared.utils.rememberImagePickerLauncher
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateServiceScreen(
-    viewModel: CreateServiceViewModel,
+    component: CreateServiceComponent,
     onBack: () -> Unit,
     onSuccess: (Long) -> Unit
 ) {
-    val state by viewModel.state.collectAsState()
-    val formState by viewModel.formState.collectAsState()
-    val categories by viewModel.categories.collectAsState()
+    val state by component.state.collectAsState()
+    val formState by component.formState.collectAsState()
+    val categories by component.categories.collectAsState()
 
     // Image picker launcher
     val imagePickerLauncher = rememberImagePickerLauncher(maxImages = 5) { images ->
-        viewModel.selectImages(images)
+        component.selectImages(images)
     }
 
     // Обработка успешного создания
@@ -87,7 +89,7 @@ fun CreateServiceScreen(
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Button(onClick = { viewModel.retry() }) {
+                        Button(onClick = { component.retry() }) {
                             Text("Повторить")
                         }
                     }
@@ -99,14 +101,14 @@ fun CreateServiceScreen(
                     formState = formState,
                     categories = categories,
                     isCreating = state is CreateServiceState.Creating,
-                    onTitleChange = viewModel::updateTitle,
-                    onDescriptionChange = viewModel::updateDescription,
-                    onPriceChange = viewModel::updatePrice,
-                    onNegotiablePriceToggle = viewModel::toggleNegotiablePrice,
-                    onCategorySelect = viewModel::selectCategory,
+                    onTitleChange = component::updateTitle,
+                    onDescriptionChange = component::updateDescription,
+                    onPriceChange = component::updatePrice,
+                    onNegotiablePriceToggle = component::toggleNegotiablePrice,
+                    onCategorySelect = component::selectCategory,
                     onAddImages = { imagePickerLauncher() },
-                    onRemoveImage = viewModel::removeImage,
-                    onCreate = viewModel::createService,
+                    onRemoveImage = component::removeImage,
+                    onCreate = component::createService,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -133,13 +135,13 @@ fun CreateServiceScreen(
 @Composable
 private fun CreateServiceForm(
     formState: ServiceFormState,
-    categories: List<info.javaway.sc.shared.domain.models.Category>,
+    categories: List<Category>,
     isCreating: Boolean,
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onPriceChange: (String) -> Unit,
     onNegotiablePriceToggle: (Boolean) -> Unit,
-    onCategorySelect: (info.javaway.sc.shared.domain.models.Category) -> Unit,
+    onCategorySelect: (Category) -> Unit,
     onAddImages: () -> Unit,
     onRemoveImage: (Int) -> Unit,
     onCreate: () -> Unit,
@@ -262,7 +264,7 @@ private fun CreateServiceForm(
  */
 @Composable
 private fun ImageSelector(
-    selectedImages: List<info.javaway.sc.shared.utils.SelectedImage>,
+    selectedImages: List<SelectedImage>,
     imagesError: String?,
     onAddImages: () -> Unit,
     onRemoveImage: (Int) -> Unit,
@@ -377,7 +379,7 @@ private fun ImageSelector(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ImagePreviewCard(
-    image: info.javaway.sc.shared.utils.SelectedImage,
+    image: SelectedImage,
     onRemove: () -> Unit,
     enabled: Boolean
 ) {

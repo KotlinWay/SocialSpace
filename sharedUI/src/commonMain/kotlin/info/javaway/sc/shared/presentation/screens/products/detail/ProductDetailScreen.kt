@@ -1,4 +1,4 @@
-package info.javaway.sc.shared.presentation.screens.products
+package info.javaway.sc.shared.presentation.screens.products.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +39,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,8 +55,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import info.javaway.sc.shared.domain.models.Product
 import info.javaway.sc.shared.domain.models.ProductCondition
-import org.koin.compose.koinInject
-import org.koin.core.parameter.parametersOf
+import info.javaway.sc.shared.domain.models.UserPublicInfo
 
 /**
  * Экран деталей товара
@@ -62,13 +63,12 @@ import org.koin.core.parameter.parametersOf
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductDetailScreen(
-    productId: Long,
+    component: ProductDetailComponent,
     onBack: () -> Unit,
     onCallSeller: (String) -> Unit,
-    onEditProduct: ((Long) -> Unit)? = null,
-    viewModel: ProductDetailViewModel = koinInject { parametersOf(productId) }
+    onEditProduct: ((Long) -> Unit)? = null
 ) {
-    val state = viewModel.state
+    val state by component.state.collectAsState()
 
     Scaffold(
         topBar = {
@@ -80,24 +80,25 @@ fun ProductDetailScreen(
                     }
                 },
                 actions = {
+                    val currentState = state
                     // Кнопка избранного (только для Success состояния)
-                    if (state is ProductDetailState.Success) {
+                    if (currentState is ProductDetailState.Success) {
                         IconButton(
-                            onClick = { viewModel.toggleFavorite() },
-                            enabled = !state.isTogglingFavorite
+                            onClick = { component.toggleFavorite() },
+                            enabled = !currentState.isTogglingFavorite
                         ) {
                             Icon(
-                                imageVector = if (state.isFavorite) {
+                                imageVector = if (currentState.isFavorite) {
                                     Icons.Filled.Favorite
                                 } else {
                                     Icons.Outlined.FavoriteBorder
                                 },
-                                contentDescription = if (state.isFavorite) {
+                                contentDescription = if (currentState.isFavorite) {
                                     "Удалить из избранного"
                                 } else {
                                     "Добавить в избранное"
                                 },
-                                tint = if (state.isFavorite) {
+                                tint = if (currentState.isFavorite) {
                                     Color.Red
                                 } else {
                                     MaterialTheme.colorScheme.onSurface
@@ -114,18 +115,18 @@ fun ProductDetailScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (state) {
+            when (val currentState = state) {
                 is ProductDetailState.Loading -> {
                     LoadingState()
                 }
 
                 is ProductDetailState.Success -> {
                     ProductDetailContent(
-                        product = state.product,
-                        isOwner = state.isOwner,
+                        product = currentState.product,
+                        isOwner = currentState.isOwner,
                         onCallSeller = onCallSeller,
-                        onEditProduct = if (state.isOwner && onEditProduct != null) {
-                            { onEditProduct(state.product.id) }
+                        onEditProduct = if (currentState.isOwner && onEditProduct != null) {
+                            { onEditProduct(currentState.product.id) }
                         } else {
                             {}
                         }
@@ -134,8 +135,8 @@ fun ProductDetailScreen(
 
                 is ProductDetailState.Error -> {
                     ErrorState(
-                        message = state.message,
-                        onRetry = { viewModel.loadProduct() }
+                        message = currentState.message,
+                        onRetry = { component.loadProduct() }
                     )
                 }
             }
@@ -305,7 +306,7 @@ private fun ImageGallery(images: List<String>) {
  */
 @Composable
 private fun SellerCard(
-    seller: info.javaway.sc.shared.domain.models.UserPublicInfo,
+    seller: UserPublicInfo,
     onCallSeller: (String) -> Unit
 ) {
     Card(

@@ -1,4 +1,4 @@
-package info.javaway.sc.shared.presentation.screens.products
+package info.javaway.sc.shared.presentation.screens.products.edit
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -19,8 +19,10 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import info.javaway.sc.api.models.ProductCondition
+import info.javaway.sc.shared.domain.models.Category
 import info.javaway.sc.shared.domain.models.CategoryType
 import info.javaway.sc.shared.presentation.components.CategorySelectorField
+import info.javaway.sc.shared.utils.SelectedImage
 import info.javaway.sc.shared.utils.rememberImagePickerLauncher
 
 /**
@@ -29,17 +31,17 @@ import info.javaway.sc.shared.utils.rememberImagePickerLauncher
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProductScreen(
-    viewModel: EditProductViewModel,
+    component: EditProductComponent,
     onBack: () -> Unit,
     onSuccess: (Long) -> Unit
 ) {
-    val state by viewModel.state.collectAsState()
-    val formState by viewModel.formState.collectAsState()
-    val categories by viewModel.categories.collectAsState()
+    val state by component.state.collectAsState()
+    val formState by component.formState.collectAsState()
+    val categories by component.categories.collectAsState()
 
     // Image picker launcher
     val imagePickerLauncher = rememberImagePickerLauncher(maxImages = 5) { images ->
-        viewModel.selectImages(images)
+        component.selectImages(images)
     }
 
     // Обработка успешного обновления
@@ -94,7 +96,7 @@ fun EditProductScreen(
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Button(onClick = { viewModel.retry() }) {
+                        Button(onClick = { component.retry() }) {
                             Text("Повторить")
                         }
                     }
@@ -106,15 +108,15 @@ fun EditProductScreen(
                     formState = formState,
                     categories = categories,
                     isUpdating = state is EditProductState.Updating,
-                    onTitleChange = viewModel::updateTitle,
-                    onDescriptionChange = viewModel::updateDescription,
-                    onPriceChange = viewModel::updatePrice,
-                    onCategorySelect = viewModel::selectCategory,
-                    onConditionSelect = viewModel::selectCondition,
+                    onTitleChange = component::updateTitle,
+                    onDescriptionChange = component::updateDescription,
+                    onPriceChange = component::updatePrice,
+                    onCategorySelect = component::selectCategory,
+                    onConditionSelect = component::selectCondition,
                     onAddImages = { imagePickerLauncher() },
-                    onRemoveExistingImage = viewModel::removeExistingImage,
-                    onRemoveNewImage = viewModel::removeNewImage,
-                    onUpdate = viewModel::updateProduct,
+                    onRemoveExistingImage = component::removeExistingImage,
+                    onRemoveNewImage = component::removeNewImage,
+                    onUpdate = component::updateProduct,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -140,12 +142,12 @@ fun EditProductScreen(
 @Composable
 private fun EditProductForm(
     formState: EditProductFormState,
-    categories: List<info.javaway.sc.shared.domain.models.Category>,
+    categories: List<Category>,
     isUpdating: Boolean,
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onPriceChange: (String) -> Unit,
-    onCategorySelect: (info.javaway.sc.shared.domain.models.Category) -> Unit,
+    onCategorySelect: (Category) -> Unit,
     onConditionSelect: (ProductCondition) -> Unit,
     onAddImages: () -> Unit,
     onRemoveExistingImage: (Int) -> Unit,
@@ -284,7 +286,7 @@ private fun EditProductForm(
 @Composable
 private fun EditImageSelector(
     existingImages: List<String>,
-    newImages: List<info.javaway.sc.shared.utils.SelectedImage>,
+    newImages: List<SelectedImage>,
     removedExistingImageIndices: Set<Int>,
     imagesError: String?,
     onAddImages: () -> Unit,
@@ -430,6 +432,7 @@ private fun ExistingImageCard(
                 contentScale = ContentScale.Crop
             )
 
+
             // URL изображения
             Text(
                 text = imageUrl.substringAfterLast('/'),
@@ -456,7 +459,7 @@ private fun ExistingImageCard(
  */
 @Composable
 private fun NewImagePreviewCard(
-    image: info.javaway.sc.shared.utils.SelectedImage,
+    image: SelectedImage,
     onRemove: () -> Unit,
     enabled: Boolean
 ) {

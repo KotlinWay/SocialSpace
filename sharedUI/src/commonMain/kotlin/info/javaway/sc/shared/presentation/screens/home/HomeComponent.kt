@@ -1,72 +1,69 @@
 package info.javaway.sc.shared.presentation.screens.home
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import com.arkivanov.decompose.ComponentContext
 import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.domain.models.User
 import info.javaway.sc.shared.domain.repository.AuthRepository
+import info.javaway.sc.shared.presentation.core.BaseComponent
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel для главного экрана
+ * Компонент для главного экрана.
  */
-class HomeViewModel(
+interface HomeComponent {
+    val state: StateFlow<HomeState>
+    val isLoggedOut: StateFlow<Boolean>
+
+    fun logout()
+    fun retry()
+}
+
+class DefaultHomeComponent(
+    componentContext: ComponentContext,
     private val authRepository: AuthRepository,
     private val tokenManager: TokenManager
-) {
-    private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+) : BaseComponent(componentContext), HomeComponent {
 
-    // Единое состояние экрана
-    var state by mutableStateOf<HomeState>(HomeState.Loading)
-        private set
+    private val _state = MutableStateFlow<HomeState>(HomeState.Loading)
+    override val state: StateFlow<HomeState> = _state.asStateFlow()
 
-    // Флаг выхода из системы (отдельно от основного состояния)
-    var isLoggedOut by mutableStateOf(false)
-        private set
+    private val _isLoggedOut = MutableStateFlow(false)
+    override val isLoggedOut: StateFlow<Boolean> = _isLoggedOut.asStateFlow()
 
     init {
         loadCurrentUser()
     }
 
-    private fun loadCurrentUser() {
-        state = HomeState.Loading
+    override fun logout() {
+        tokenManager.clear()
+        _isLoggedOut.value = true
+    }
 
-        viewModelScope.launch {
-            Napier.d { "HomeViewModel: Starting loadCurrentUser" }
+    override fun retry() {
+        loadCurrentUser()
+    }
+
+    private fun loadCurrentUser() {
+        _state.value = HomeState.Loading
+
+        componentScope.launch {
+            Napier.d { "HomeComponent: Starting loadCurrentUser" }
             Napier.d { "Token: ${tokenManager.getToken()}" }
 
             authRepository.getCurrentUser()
                 .onSuccess { user ->
                     Napier.d { "User loaded successfully: $user" }
-                    state = HomeState.Success(user)
+                    _state.value = HomeState.Success(user)
                 }
                 .onFailure { error ->
                     Napier.e(error) { "Error loading user: ${error.message}" }
-                    state = HomeState.Error(error.message ?: "Неизвестная ошибка")
+                    _state.value = HomeState.Error(error.message ?: "Неизвестная ошибка")
                 }
         }
-    }
-
-    fun logout() {
-        tokenManager.clear()
-        isLoggedOut = true
-    }
-
-    fun retry() {
-        loadCurrentUser()
-    }
-
-    /**
-     * Очистка ресурсов
-     */
-    fun onCleared() {
-        viewModelScope.cancel()
     }
 }
 

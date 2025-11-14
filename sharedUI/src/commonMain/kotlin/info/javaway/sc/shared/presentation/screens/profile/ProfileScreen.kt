@@ -34,14 +34,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import info.javaway.sc.shared.domain.models.User
-import org.koin.compose.koinInject
 
 /**
  * Экран профиля пользователя
@@ -49,18 +49,13 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
+    component: ProfileComponent,
     onLogout: () -> Unit,
     onMyProductsClick: () -> Unit,
     onMyServicesClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: ProfileViewModel = koinInject()
+    modifier: Modifier = Modifier
 ) {
-    // Очистка ViewModel при уничтожении экрана
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.onCleared()
-        }
-    }
+    val uiState by component.state.collectAsState()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -79,25 +74,25 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (val state = viewModel.state) {
+            when (val state = uiState) {
                 is ProfileState.Loading -> {
                     LoadingContent()
                 }
                 is ProfileState.Success -> {
-                    ProfileContent(
-                        user = state.user,
-                        onLogout = {
-                            viewModel.logout()
-                            onLogout()
-                        },
-                        onMyProductsClick = onMyProductsClick,
-                        onMyServicesClick = onMyServicesClick
-                    )
+                        ProfileContent(
+                            user = state.user,
+                            onLogout = {
+                                component.logout()
+                                onLogout()
+                            },
+                            onMyProductsClick = onMyProductsClick,
+                            onMyServicesClick = onMyServicesClick
+                        )
                 }
                 is ProfileState.Error -> {
-                    ErrorContent(
-                        message = state.message,
-                        onRetry = { viewModel.loadProfile() }
+                        ErrorContent(
+                            message = state.message,
+                            onRetry = { component.loadProfile() }
                     )
                 }
             }

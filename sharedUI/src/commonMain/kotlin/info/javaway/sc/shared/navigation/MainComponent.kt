@@ -7,8 +7,39 @@ import com.arkivanov.decompose.router.stack.bringToFront
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
+import info.javaway.sc.shared.data.api.ApiClient
+import info.javaway.sc.shared.data.local.TokenManager
+import info.javaway.sc.shared.domain.repository.AuthRepository
+import info.javaway.sc.shared.domain.repository.CategoryRepository
+import info.javaway.sc.shared.domain.repository.ProductRepository
+import info.javaway.sc.shared.domain.repository.ServiceRepository
+import info.javaway.sc.shared.presentation.screens.products.create.CreateProductComponent
+import info.javaway.sc.shared.presentation.screens.products.create.DefaultCreateProductComponent
+import info.javaway.sc.shared.presentation.screens.products.detail.DefaultProductDetailComponent
+import info.javaway.sc.shared.presentation.screens.products.detail.ProductDetailComponent
+import info.javaway.sc.shared.presentation.screens.products.edit.DefaultEditProductComponent
+import info.javaway.sc.shared.presentation.screens.products.edit.EditProductComponent
+import info.javaway.sc.shared.presentation.screens.products.list.DefaultProductListComponent
+import info.javaway.sc.shared.presentation.screens.products.list.ProductListComponent
+import info.javaway.sc.shared.presentation.screens.profile.DefaultProfileComponent
+import info.javaway.sc.shared.presentation.screens.profile.ProfileComponent
+import info.javaway.sc.shared.presentation.screens.profile.products.DefaultMyProductsComponent
+import info.javaway.sc.shared.presentation.screens.profile.products.MyProductsComponent
+import info.javaway.sc.shared.presentation.screens.services.DefaultMyServicesComponent
+import info.javaway.sc.shared.presentation.screens.services.EditServiceComponent
+import info.javaway.sc.shared.presentation.screens.services.MyServicesComponent
+import info.javaway.sc.shared.presentation.screens.services.create.CreateServiceComponent
+import info.javaway.sc.shared.presentation.screens.services.create.DefaultCreateServiceComponent
+import info.javaway.sc.shared.presentation.screens.services.detail.DefaultServiceDetailComponent
+import info.javaway.sc.shared.presentation.screens.services.detail.ServiceDetailComponent
+import info.javaway.sc.shared.presentation.screens.services.list.DefaultServiceListComponent
+import info.javaway.sc.shared.presentation.screens.services.list.ServiceListComponent
+import info.javaway.sc.shared.presentation.screens.services.DefaultEditServiceComponent
 import kotlinx.serialization.Serializable
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * Main компонент с Bottom Navigation (Товары, Услуги, Профиль)
@@ -16,7 +47,14 @@ import kotlinx.serialization.Serializable
 class MainComponent(
     componentContext: ComponentContext,
     private val onLogout: () -> Unit
-) : ComponentContext by componentContext {
+) : ComponentContext by componentContext, KoinComponent {
+
+    private val productRepository: ProductRepository by inject()
+    private val serviceRepository: ServiceRepository by inject()
+    private val categoryRepository: CategoryRepository by inject()
+    private val authRepository: AuthRepository by inject()
+    private val apiClient: ApiClient by inject()
+    private val tokenManager: TokenManager by inject()
 
     private val navigation = StackNavigation<Config>()
 
@@ -32,100 +70,149 @@ class MainComponent(
     private fun child(config: Config, componentContext: ComponentContext): Child =
         when (config) {
             is Config.Products -> Child.Products(
+                component = DefaultProductListComponent(
+                    componentContext = componentContext,
+                    productRepository = productRepository
+                ),
                 onProductClick = { productId ->
-                    navigation.push(Config.ProductDetail(productId))
+                    navigation.pushNew(Config.ProductDetail(productId))
                 },
                 onCreateProduct = {
-                    navigation.push(Config.CreateProduct)
+                    navigation.pushNew(Config.CreateProduct)
                 }
             )
             is Config.ProductDetail -> Child.ProductDetail(
-                productId = config.productId,
+                component = DefaultProductDetailComponent(
+                    componentContext = componentContext,
+                    productRepository = productRepository,
+                    authRepository = authRepository,
+                    productId = config.productId
+                ),
                 onBack = { navigation.pop() },
                 onEditProduct = { productId ->
-                    navigation.push(Config.EditProduct(productId))
+                    navigation.pushNew(Config.EditProduct(productId))
                 }
             )
             is Config.CreateProduct -> Child.CreateProduct(
+                component = DefaultCreateProductComponent(
+                    componentContext = componentContext,
+                    apiClient = apiClient,
+                    categoryRepository = categoryRepository
+                ),
                 onBack = { navigation.pop() },
                 onSuccess = { productId ->
-                    // После создания товара возвращаемся на список и открываем детали
                     navigation.pop()
-                    navigation.push(Config.ProductDetail(productId))
+                    navigation.pushNew(Config.ProductDetail(productId))
                 }
             )
             is Config.Services -> Child.Services(
+                component = DefaultServiceListComponent(
+                    componentContext = componentContext,
+                    serviceRepository = serviceRepository
+                ),
                 onServiceClick = { serviceId ->
-                    navigation.push(Config.ServiceDetail(serviceId))
+                    navigation.pushNew(Config.ServiceDetail(serviceId))
                 },
                 onCreateService = {
-                    navigation.push(Config.CreateService)
+                    navigation.pushNew(Config.CreateService)
                 }
             )
             is Config.ServiceDetail -> Child.ServiceDetail(
-                serviceId = config.serviceId,
+                component = DefaultServiceDetailComponent(
+                    componentContext = componentContext,
+                    serviceRepository = serviceRepository,
+                    authRepository = authRepository,
+                    serviceId = config.serviceId
+                ),
                 onBack = { navigation.pop() },
                 onEditService = { serviceId ->
-                    navigation.push(Config.EditService(serviceId))
+                    navigation.pushNew(Config.EditService(serviceId))
                 }
             )
             is Config.CreateService -> Child.CreateService(
+                component = DefaultCreateServiceComponent(
+                    componentContext = componentContext,
+                    apiClient = apiClient,
+                    categoryRepository = categoryRepository
+                ),
                 onBack = { navigation.pop() },
                 onSuccess = { serviceId ->
-                    // После создания услуги возвращаемся на список и открываем детали
                     navigation.pop()
-                    navigation.push(Config.ServiceDetail(serviceId))
+                    navigation.pushNew(Config.ServiceDetail(serviceId))
                 }
             )
             is Config.Profile -> Child.Profile(
+                component = DefaultProfileComponent(
+                    componentContext = componentContext,
+                    authRepository = authRepository,
+                    tokenManager = tokenManager
+                ),
                 onLogout = onLogout,
                 onMyProductsClick = {
-                    navigation.push(Config.MyProducts)
+                    navigation.pushNew(Config.MyProducts)
                 },
                 onMyServicesClick = {
-                    navigation.push(Config.MyServices)
+                    navigation.pushNew(Config.MyServices)
                 }
             )
             is Config.MyProducts -> Child.MyProducts(
+                component = DefaultMyProductsComponent(
+                    componentContext = componentContext,
+                    productRepository = productRepository
+                ),
                 onBack = { navigation.pop() },
                 onProductClick = { productId ->
-                    navigation.push(Config.ProductDetail(productId))
+                    navigation.pushNew(Config.ProductDetail(productId))
                 },
                 onEditProduct = { productId ->
-                    navigation.push(Config.EditProduct(productId))
+                    navigation.pushNew(Config.EditProduct(productId))
                 },
                 onCreateProduct = {
-                    navigation.push(Config.CreateProduct)
+                    navigation.pushNew(Config.CreateProduct)
                 }
             )
             is Config.EditProduct -> Child.EditProduct(
-                productId = config.productId,
+                component = DefaultEditProductComponent(
+                    componentContext = componentContext,
+                    productId = config.productId,
+                    productRepository = productRepository,
+                    apiClient = apiClient,
+                    categoryRepository = categoryRepository
+                ),
                 onBack = { navigation.pop() },
                 onSuccess = { productId ->
-                    // После обновления товара возвращаемся и открываем детали
                     navigation.pop()
-                    navigation.push(Config.ProductDetail(productId))
+                    navigation.pushNew(Config.ProductDetail(productId))
                 }
             )
             is Config.MyServices -> Child.MyServices(
+                component = DefaultMyServicesComponent(
+                    componentContext = componentContext,
+                    serviceRepository = serviceRepository
+                ),
                 onBack = { navigation.pop() },
                 onServiceClick = { serviceId ->
-                    navigation.push(Config.ServiceDetail(serviceId))
+                    navigation.pushNew(Config.ServiceDetail(serviceId))
                 },
                 onEditService = { serviceId ->
-                    navigation.push(Config.EditService(serviceId))
+                    navigation.pushNew(Config.EditService(serviceId))
                 },
                 onCreateService = {
-                    navigation.push(Config.CreateService)
+                    navigation.pushNew(Config.CreateService)
                 }
             )
             is Config.EditService -> Child.EditService(
-                serviceId = config.serviceId,
+                component = DefaultEditServiceComponent(
+                    componentContext = componentContext,
+                    serviceId = config.serviceId,
+                    serviceRepository = serviceRepository,
+                    apiClient = apiClient,
+                    categoryRepository = categoryRepository
+                ),
                 onBack = { navigation.pop() },
                 onSuccess = { serviceId ->
-                    // После обновления услуги возвращаемся и открываем детали
                     navigation.pop()
-                    navigation.push(Config.ServiceDetail(serviceId))
+                    navigation.pushNew(Config.ServiceDetail(serviceId))
                 }
             )
         }
@@ -145,44 +232,50 @@ class MainComponent(
 
     sealed class Child {
         data class Products(
+            val component: ProductListComponent,
             val onProductClick: (Long) -> Unit,
             val onCreateProduct: () -> Unit
         ) : Child()
 
         data class ProductDetail(
-            val productId: Long,
+            val component: ProductDetailComponent,
             val onBack: () -> Unit,
             val onEditProduct: (Long) -> Unit
         ) : Child()
 
         data class CreateProduct(
+            val component: CreateProductComponent,
             val onBack: () -> Unit,
             val onSuccess: (Long) -> Unit
         ) : Child()
 
         data class Services(
+            val component: ServiceListComponent,
             val onServiceClick: (Long) -> Unit,
             val onCreateService: () -> Unit
         ) : Child()
 
         data class ServiceDetail(
-            val serviceId: Long,
+            val component: ServiceDetailComponent,
             val onBack: () -> Unit,
             val onEditService: (Long) -> Unit
         ) : Child()
 
         data class CreateService(
+            val component: CreateServiceComponent,
             val onBack: () -> Unit,
             val onSuccess: (Long) -> Unit
         ) : Child()
 
         data class Profile(
+            val component: ProfileComponent,
             val onLogout: () -> Unit,
             val onMyProductsClick: () -> Unit,
             val onMyServicesClick: () -> Unit
         ) : Child()
 
         data class MyProducts(
+            val component: MyProductsComponent,
             val onBack: () -> Unit,
             val onProductClick: (Long) -> Unit,
             val onEditProduct: (Long) -> Unit,
@@ -190,12 +283,13 @@ class MainComponent(
         ) : Child()
 
         data class EditProduct(
-            val productId: Long,
+            val component: EditProductComponent,
             val onBack: () -> Unit,
             val onSuccess: (Long) -> Unit
         ) : Child()
 
         data class MyServices(
+            val component: MyServicesComponent,
             val onBack: () -> Unit,
             val onServiceClick: (Long) -> Unit,
             val onEditService: (Long) -> Unit,
@@ -203,7 +297,7 @@ class MainComponent(
         ) : Child()
 
         data class EditService(
-            val serviceId: Long,
+            val component: EditServiceComponent,
             val onBack: () -> Unit,
             val onSuccess: (Long) -> Unit
         ) : Child()

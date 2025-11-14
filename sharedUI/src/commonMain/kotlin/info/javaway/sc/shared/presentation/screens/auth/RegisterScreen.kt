@@ -1,20 +1,40 @@
 package info.javaway.sc.shared.presentation.screens.auth
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import org.koin.compose.koinInject
 
 /**
  * Экран регистрации нового пользователя
@@ -22,26 +42,23 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    viewModel: RegisterViewModel = koinInject(),
-    onRegisterSuccess: () -> Unit = {},
-    onNavigateToLogin: () -> Unit = {}
+    component: RegisterComponent,
+    onRegisterSuccess: () -> Unit,
+    onNavigateToLogin: () -> Unit
 ) {
-    // Получаем данные из ViewModel
-    val state = viewModel.state
-    val phone = viewModel.phone
-    val name = viewModel.name
-    val email = viewModel.email
-    val password = viewModel.password
-    val confirmPassword = viewModel.confirmPassword
+    val state by component.state.collectAsState()
+    val phone by component.phone.collectAsState()
+    val name by component.name.collectAsState()
+    val email by component.email.collectAsState()
+    val password by component.password.collectAsState()
+    val confirmPassword by component.confirmPassword.collectAsState()
 
-    // Отслеживание успешной регистрации
     LaunchedEffect(state) {
         if (state is RegisterState.Success) {
             onRegisterSuccess()
         }
     }
 
-    // Определяем состояния для UI
     val isLoading = state is RegisterState.Loading
     val errorMessage = (state as? RegisterState.Error)?.message
 
@@ -95,7 +112,7 @@ fun RegisterScreen(
             // Поле телефона
             OutlinedTextField(
                 value = phone,
-                onValueChange = { viewModel.onPhoneChange(it) },
+                onValueChange = { component.onPhoneChange(it) },
                 label = { Text("Номер телефона *") },
                 placeholder = { Text("+79991234567") },
                 modifier = Modifier.fillMaxWidth(),
@@ -109,7 +126,7 @@ fun RegisterScreen(
             // Поле имени
             OutlinedTextField(
                 value = name,
-                onValueChange = { viewModel.onNameChange(it) },
+                onValueChange = { component.onNameChange(it) },
                 label = { Text("Имя *") },
                 placeholder = { Text("Иван Иванов") },
                 modifier = Modifier.fillMaxWidth(),
@@ -123,7 +140,7 @@ fun RegisterScreen(
             // Поле email (опционально)
             OutlinedTextField(
                 value = email,
-                onValueChange = { viewModel.onEmailChange(it) },
+                onValueChange = { component.onEmailChange(it) },
                 label = { Text("Email (опционально)") },
                 placeholder = { Text("example@mail.ru") },
                 modifier = Modifier.fillMaxWidth(),
@@ -137,7 +154,7 @@ fun RegisterScreen(
             // Поле пароля
             OutlinedTextField(
                 value = password,
-                onValueChange = { viewModel.onPasswordChange(it) },
+                onValueChange = { component.onPasswordChange(it) },
                 label = { Text("Пароль *") },
                 placeholder = { Text("Минимум 6 символов") },
                 modifier = Modifier.fillMaxWidth(),
@@ -152,7 +169,7 @@ fun RegisterScreen(
             // Поле подтверждения пароля
             OutlinedTextField(
                 value = confirmPassword,
-                onValueChange = { viewModel.onConfirmPasswordChange(it) },
+                onValueChange = { component.onConfirmPasswordChange(it) },
                 label = { Text("Подтверждение пароля *") },
                 placeholder = { Text("Повторите пароль") },
                 modifier = Modifier.fillMaxWidth(),
@@ -177,7 +194,7 @@ fun RegisterScreen(
 
             // Кнопка регистрации
             Button(
-                onClick = { viewModel.register() },
+                onClick = { component.register() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

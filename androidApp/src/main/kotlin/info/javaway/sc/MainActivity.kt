@@ -11,9 +11,9 @@ import info.javaway.sc.shared.di.appModules
 import info.javaway.sc.shared.navigation.RootComponent
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
+import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
-import org.koin.android.ext.android.inject
 
 /**
  * Application класс для инициализации Koin

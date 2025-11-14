@@ -1,38 +1,41 @@
-package info.javaway.sc.shared.presentation.screens.services
+package info.javaway.sc.shared.presentation.screens.services.list
 
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.arkivanov.decompose.ComponentContext
 import info.javaway.sc.shared.data.paging.ServiceFilters
 import info.javaway.sc.shared.domain.models.Service
 import info.javaway.sc.shared.domain.models.ServiceStatus
 import info.javaway.sc.shared.domain.repository.ServiceRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import info.javaway.sc.shared.presentation.core.BaseComponent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 
-/**
- * ViewModel для списка услуг с Paging 3
- */
-class ServiceListViewModel(
+interface ServiceListComponent {
+    val filters: StateFlow<ServiceFiltersState>
+    val servicesFlow: Flow<PagingData<Service>>
+
+    fun updateFilters(
+        categoryId: Long? = null,
+        status: ServiceStatus? = null,
+        search: String? = null
+    )
+
+    fun clearFilters()
+}
+
+class DefaultServiceListComponent(
+    componentContext: ComponentContext,
     private val serviceRepository: ServiceRepository
-) {
-    private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+) : BaseComponent(componentContext), ServiceListComponent {
 
-    // Фильтры для услуг
     private val _filters = MutableStateFlow(ServiceFiltersState())
-    val filters: StateFlow<ServiceFiltersState> = _filters.asStateFlow()
+    override val filters: StateFlow<ServiceFiltersState> = _filters.asStateFlow()
 
-    /**
-     * Flow с пагинированными услугами
-     * При изменении фильтров автоматически создается новый PagingSource
-     */
-    val servicesFlow: Flow<PagingData<Service>> = _filters
+    override val servicesFlow: Flow<PagingData<Service>> = _filters
         .flatMapLatest { filters ->
             serviceRepository.getServicesPaged(
                 ServiceFilters(
@@ -42,16 +45,12 @@ class ServiceListViewModel(
                 )
             )
         }
-        .cachedIn(viewModelScope) // Кэширование в scope
+        .cachedIn(componentScope)
 
-    /**
-     * Обновить фильтры
-     * Автоматически триггерит новую загрузку через servicesFlow
-     */
-    fun updateFilters(
-        categoryId: Long? = null,
-        status: ServiceStatus? = null,
-        search: String? = null
+    override fun updateFilters(
+        categoryId: Long?,
+        status: ServiceStatus?,
+        search: String?
     ) {
         _filters.value = ServiceFiltersState(
             categoryId = categoryId,
@@ -60,18 +59,8 @@ class ServiceListViewModel(
         )
     }
 
-    /**
-     * Сбросить все фильтры
-     */
-    fun clearFilters() {
+    override fun clearFilters() {
         _filters.value = ServiceFiltersState()
-    }
-
-    /**
-     * Очистка ресурсов
-     */
-    fun onCleared() {
-        viewModelScope.cancel()
     }
 }
 

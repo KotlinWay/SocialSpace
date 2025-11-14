@@ -1,4 +1,4 @@
-package info.javaway.sc.shared.presentation.screens.products
+package info.javaway.sc.shared.presentation.screens.products.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,19 +27,17 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import info.javaway.sc.shared.domain.models.Product
 import info.javaway.sc.shared.presentation.components.ProductCard
-import org.koin.compose.koinInject
 
 /**
  * Экран списка товаров с Paging 3
  */
 @Composable
 fun ProductListScreen(
-    viewModel: ProductListViewModel = koinInject(),
-    onProductClick: (Long) -> Unit = {},
-    onCreateProduct: () -> Unit = {}
+    component: ProductListComponent,
+    onProductClick: (Long) -> Unit,
+    onCreateProduct: () -> Unit
 ) {
-    // Collect PagingData as LazyPagingItems
-    val lazyPagingItems: LazyPagingItems<Product> = viewModel.productsFlow.collectAsLazyPagingItems()
+    val lazyPagingItems: LazyPagingItems<Product> = component.productsFlow.collectAsLazyPagingItems()
 
     ProductListContent(
         lazyPagingItems = lazyPagingItems,

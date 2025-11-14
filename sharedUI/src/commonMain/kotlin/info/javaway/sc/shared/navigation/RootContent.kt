@@ -18,10 +18,12 @@ fun RootContent(component: RootComponent) {
     ) {
         when (val child = it.instance) {
             is RootComponent.Child.Login -> LoginScreen(
+                component = child.component,
                 onLoginSuccess = child.onLoginSuccess,
                 onNavigateToRegister = child.onNavigateToRegister
             )
             is RootComponent.Child.Register -> RegisterScreen(
+                component = child.component,
                 onRegisterSuccess = child.onRegisterSuccess,
                 onNavigateToLogin = child.onNavigateToLogin
             )
