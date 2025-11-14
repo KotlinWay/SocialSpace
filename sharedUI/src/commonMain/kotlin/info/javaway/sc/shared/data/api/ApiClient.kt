@@ -255,7 +255,9 @@ class ApiClient(
                 val result = uploadImage(bytes, fileName, mimeType, type)
                 if (result.isSuccess) {
                     val uploadResponse = result.getOrNull()!!
-                    urls.add(uploadResponse.url)
+                    val url = uploadResponse.url
+                        ?: return Result.failure(IllegalStateException("Upload response missing URL"))
+                    urls.add(url)
                 } else {
                     val exception = result.exceptionOrNull()!!
                     return Result.failure(exception)

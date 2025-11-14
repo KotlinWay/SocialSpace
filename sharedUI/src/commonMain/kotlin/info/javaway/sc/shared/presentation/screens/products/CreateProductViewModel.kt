@@ -2,8 +2,10 @@ package info.javaway.sc.shared.presentation.screens.products
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import info.javaway.sc.api.models.*
+import info.javaway.sc.api.models.CreateProductRequest
+import info.javaway.sc.api.models.ProductCondition
 import info.javaway.sc.shared.data.api.ApiClient
+import info.javaway.sc.shared.domain.models.Category
 import info.javaway.sc.shared.domain.repository.CategoryRepository
 import info.javaway.sc.shared.utils.SelectedImage
 import io.github.aakira.napier.Napier

@@ -1,6 +1,5 @@
 package info.javaway.sc.shared.presentation.screens.products
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -12,15 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import info.javaway.sc.api.models.CategoryType
 import info.javaway.sc.api.models.ProductCondition
+import info.javaway.sc.shared.domain.models.CategoryType
 import info.javaway.sc.shared.presentation.components.CategorySelectorField
 import info.javaway.sc.shared.utils.rememberImagePickerLauncher
-import org.jetbrains.skia.Image as SkImage
 
 /**
  * Экран создания товара
@@ -139,12 +135,12 @@ fun CreateProductScreen(
 @Composable
 private fun CreateProductForm(
     formState: ProductFormState,
-    categories: List<info.javaway.sc.api.models.Category>,
+    categories: List<info.javaway.sc.shared.domain.models.Category>,
     isCreating: Boolean,
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onPriceChange: (String) -> Unit,
-    onCategorySelect: (info.javaway.sc.api.models.Category) -> Unit,
+    onCategorySelect: (info.javaway.sc.shared.domain.models.Category) -> Unit,
     onConditionSelect: (ProductCondition) -> Unit,
     onAddImages: () -> Unit,
     onRemoveImage: (Int) -> Unit,
@@ -388,6 +384,7 @@ private fun ImageSelector(
 
 /**
  * Карточка предпросмотра изображения
+ * TODO: Добавить preview изображения через Coil или Skia после настройки зависимостей
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -396,75 +393,41 @@ private fun ImagePreviewCard(
     onRemove: () -> Unit,
     enabled: Boolean
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Изображение
-            val imageBitmap = remember(image) {
-                try {
-                    SkImage.makeFromEncoded(image.bytes).toComposeImageBitmap()
-                } catch (e: Exception) {
-                    null
-                }
-            }
-
-            if (imageBitmap != null) {
-                Image(
-                    bitmap = imageBitmap,
-                    contentDescription = image.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Информация об изображении
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = image.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1
                 )
-            } else {
-                // Fallback если не удалось декодировать
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Ошибка загрузки изображения",
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
+                Text(
+                    text = "${image.bytes.size / 1024} KB • ${image.mimeType}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             // Кнопка удаления
             if (enabled) {
-                IconButton(
-                    onClick = onRemove,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                ) {
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Удалить",
-                            modifier = Modifier.padding(4.dp)
-                        )
-                    }
+                IconButton(onClick = onRemove) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Удалить"
+                    )
                 }
-            }
-
-            // Имя файла внизу
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
-            ) {
-                Text(
-                    text = image.name,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(8.dp),
-                    maxLines = 1
-                )
             }
         }
     }

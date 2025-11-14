@@ -12,8 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import info.javaway.sc.api.models.Category
-import info.javaway.sc.api.models.CategoryType
+import info.javaway.sc.shared.domain.models.Category
+import info.javaway.sc.shared.domain.models.CategoryType
 
 /**
  * Селектор категории с диалогом
