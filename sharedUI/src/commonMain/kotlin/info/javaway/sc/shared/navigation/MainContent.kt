@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import info.javaway.sc.shared.presentation.screens.products.CreateProductScreen
+import info.javaway.sc.shared.presentation.screens.products.EditProductScreen
 import info.javaway.sc.shared.presentation.screens.products.MyProductsScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductDetailScreen
 import info.javaway.sc.shared.presentation.screens.products.ProductListScreen
@@ -95,7 +96,8 @@ fun MainContent(
                             onCallSeller = { phone ->
                                 // TODO: Реализовать в Android через Intent.ACTION_DIAL
                                 println("Call seller: $phone")
-                            }
+                            },
+                            onEditProduct = child.onEditProduct
                         )
                     }
                     is MainComponent.Child.CreateProduct -> {
@@ -142,6 +144,16 @@ fun MainContent(
                             onProductClick = child.onProductClick,
                             onEditProduct = child.onEditProduct,
                             onCreateProduct = child.onCreateProduct
+                        )
+                    }
+                    is MainComponent.Child.EditProduct -> {
+                        val viewModel = koinInject<info.javaway.sc.shared.presentation.screens.products.EditProductViewModel> {
+                            parametersOf(child.productId)
+                        }
+                        EditProductScreen(
+                            viewModel = viewModel,
+                            onBack = child.onBack,
+                            onSuccess = child.onSuccess
                         )
                     }
                 }
