@@ -32,6 +32,8 @@ import info.javaway.sc.shared.presentation.screens.services.detail.ServiceDetail
 import info.javaway.sc.shared.presentation.screens.services.list.ServiceListScreen
 import info.javaway.sc.shared.presentation.screens.services.EditServiceScreen
 import info.javaway.sc.shared.presentation.screens.services.MyServicesScreen
+import info.javaway.sc.shared.utils.PhoneDialer
+import org.koin.compose.koinInject
 
 /**
  * Main контент с Bottom Navigation
@@ -43,6 +45,9 @@ fun MainContent(
 ) {
     val stack by component.stack.subscribeAsState()
     val activeChild = stack.active.instance
+
+    // Inject PhoneDialer from Koin
+    val phoneDialer: PhoneDialer = koinInject()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -93,8 +98,7 @@ fun MainContent(
                             component = child.component,
                             onBack = child.onBack,
                             onCallSeller = { phone ->
-                                // TODO: Реализовать в Android через Intent.ACTION_DIAL
-                                println("Call seller: $phone")
+                                phoneDialer.dial(phone)
                             },
                             onEditProduct = child.onEditProduct
                         )
@@ -118,8 +122,7 @@ fun MainContent(
                             component = child.component,
                             onBack = child.onBack,
                             onCallProvider = { phone ->
-                                // TODO: Реализовать в Android через Intent.ACTION_DIAL
-                                println("Call provider: $phone")
+                                phoneDialer.dial(phone)
                             },
                             onEditService = child.onEditService
                         )

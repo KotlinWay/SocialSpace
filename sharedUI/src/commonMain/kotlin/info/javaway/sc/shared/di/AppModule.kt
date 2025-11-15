@@ -10,6 +10,7 @@ import info.javaway.sc.shared.domain.repository.AuthRepository
 import info.javaway.sc.shared.domain.repository.CategoryRepository
 import info.javaway.sc.shared.domain.repository.ProductRepository
 import info.javaway.sc.shared.domain.repository.ServiceRepository
+import info.javaway.sc.shared.utils.PhoneDialer
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -34,6 +35,12 @@ val dataModule = module {
     }
 }
 
+/**
+ * Platform-specific module (expect/actual pattern)
+ * Provides platform-specific dependencies like PhoneDialer
+ */
+expect val platformModule: org.koin.core.module.Module
+
 val repositoryModule = module {
     singleOf(::AuthRepositoryImpl) bind AuthRepository::class
     singleOf(::CategoryRepositoryImpl) bind CategoryRepository::class
@@ -44,5 +51,6 @@ val repositoryModule = module {
 // Объединенный список всех модулей
 val appModules = listOf(
     dataModule,
-    repositoryModule
+    repositoryModule,
+    platformModule
 )
