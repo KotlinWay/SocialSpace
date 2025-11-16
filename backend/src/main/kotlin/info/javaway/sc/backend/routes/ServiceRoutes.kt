@@ -4,6 +4,9 @@ import info.javaway.sc.api.models.*
 import info.javaway.sc.backend.repository.CategoryRepository
 import info.javaway.sc.backend.repository.ServiceRepository
 import info.javaway.sc.backend.repository.UserRepository
+import info.javaway.sc.backend.services.SpaceService
+import info.javaway.sc.backend.services.SpaceService.SpaceException
+import info.javaway.sc.backend.utils.SpaceDefaults
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -19,8 +22,22 @@ import kotlin.math.ceil
 fun Route.serviceRoutes(
     serviceRepository: ServiceRepository = ServiceRepository(),
     userRepository: UserRepository = UserRepository(),
-    categoryRepository: CategoryRepository = CategoryRepository()
+    categoryRepository: CategoryRepository = CategoryRepository(),
+    spaceService: SpaceService = SpaceService()
 ) {
+    suspend fun ApplicationCall.resolveSpaceIdOrRespond(): Long? {
+        val param = request.queryParameters["spaceId"]
+        if (param.isNullOrBlank()) {
+            return SpaceDefaults.DEFAULT_SPACE_ID
+        }
+        return param.toLongOrNull() ?: run {
+            respond(
+                HttpStatusCode.BadRequest,
+                ErrorResponse("INVALID_SPACE_ID", "Некорректный spaceId")
+            )
+            null
+        }
+    }
 
     route("/services") {
 
@@ -36,6 +53,8 @@ fun Route.serviceRoutes(
          * - pageSize: Int? - размер страницы (по умолчанию 20, максимум 100)
          */
         get {
+            val spaceId = call.resolveSpaceIdOrRespond() ?: return@get
+
             try {
                 val categoryId = call.request.queryParameters["categoryId"]?.toLongOrNull()
                 val statusStr = call.request.queryParameters["status"]
@@ -43,7 +62,6 @@ fun Route.serviceRoutes(
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
                 val pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull()?.coerceIn(1, 100) ?: 20
 
-                // Валидация page
                 if (page < 1) {
                     call.respond(
                         HttpStatusCode.BadRequest,
@@ -52,19 +70,23 @@ fun Route.serviceRoutes(
                     return@get
                 }
 
-                // Парсинг enum значений
-                val status = statusStr?.let {
+                val status = statusStr?.let { runCatching { ServiceStatus.valueOf(it) }.getOrNull() }
+
+                val principal = call.principal<JWTPrincipal>()
+                val currentUserId = principal?.payload?.getClaim("userId")?.asLong()
+                currentUserId?.let {
                     try {
-                        ServiceStatus.valueOf(it)
-                    } catch (e: IllegalArgumentException) {
-                        null
+                        spaceService.ensureMembership(spaceId, it)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
+                        return@get
                     }
                 }
 
                 val offset = ((page - 1) * pageSize).toLong()
 
-                // Получаем услуги и их количество
                 val services = serviceRepository.getAllServices(
+                    spaceId = spaceId,
                     categoryId = categoryId,
                     status = status,
                     searchQuery = searchQuery,
@@ -73,6 +95,7 @@ fun Route.serviceRoutes(
                 )
 
                 val total = serviceRepository.countServices(
+                    spaceId = spaceId,
                     categoryId = categoryId,
                     status = status,
                     searchQuery = searchQuery
@@ -87,6 +110,7 @@ fun Route.serviceRoutes(
 
                     ServiceListItem(
                         id = service.id,
+                        spaceId = service.spaceId,
                         title = service.title,
                         description = service.description,
                         price = service.price,
@@ -154,6 +178,17 @@ fun Route.serviceRoutes(
                     return@get
                 }
 
+                val principal = call.principal<JWTPrincipal>()
+                val currentUserId = principal?.payload?.getClaim("userId")?.asLong()
+                currentUserId?.let {
+                    try {
+                        spaceService.ensureMembership(service.spaceId, it)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
+                        return@get
+                    }
+                }
+
                 // Увеличиваем счетчик просмотров
                 serviceRepository.incrementViews(serviceId)
 
@@ -214,6 +249,8 @@ fun Route.serviceRoutes(
              * Получить список услуг текущего пользователя
              */
             get("/my") {
+                val spaceId = call.resolveSpaceIdOrRespond() ?: return@get
+
                 try {
                     val principal = call.principal<JWTPrincipal>()
                     val userId = principal?.payload?.getClaim("userId")?.asLong()
@@ -226,19 +263,31 @@ fun Route.serviceRoutes(
                         return@get
                     }
 
+                    try {
+                        spaceService.ensureMembership(spaceId, userId)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
+                        return@get
+                    }
+
                     val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
                     val pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull()?.coerceIn(1, 100) ?: 20
                     val offset = ((page - 1) * pageSize).toLong()
 
-                    val services = serviceRepository.findByUserId(userId, limit = pageSize, offset = offset)
+                    val services = serviceRepository.findByUserId(
+                        userId = userId,
+                        spaceId = spaceId,
+                        limit = pageSize,
+                        offset = offset
+                    )
 
-                    // Маппим Service -> ServiceListItem
                     val serviceListItems = services.mapNotNull { service ->
                         val user = userRepository.findById(service.userId) ?: return@mapNotNull null
                         val category = categoryRepository.findById(service.categoryId) ?: return@mapNotNull null
 
                         ServiceListItem(
                             id = service.id,
+                            spaceId = service.spaceId,
                             title = service.title,
                             description = service.description,
                             price = service.price,
@@ -333,21 +382,36 @@ fun Route.serviceRoutes(
                         return@post
                     }
 
-                    // Проверяем существование категории
                     val category = categoryRepository.findById(request.categoryId)
-                    if (category == null) {
+                    if (category == null || category.type != CategoryType.SERVICE) {
                         call.respond(
                             HttpStatusCode.BadRequest,
-                            ErrorResponse("INVALID_CATEGORY", "Категория не найдена")
+                            ErrorResponse("INVALID_CATEGORY", "Неверная категория услуги")
                         )
                         return@post
                     }
 
-                    if (category.type != CategoryType.SERVICE) {
+                    val user = userRepository.findById(userId)
+                        ?: return@post call.respond(
+                            HttpStatusCode.InternalServerError,
+                            ErrorResponse("USER_NOT_FOUND", "Пользователь не найден")
+                        )
+
+                    val requestedSpaceId = request.spaceId
+                    if (requestedSpaceId != null && requestedSpaceId <= 0) {
                         call.respond(
                             HttpStatusCode.BadRequest,
-                            ErrorResponse("INVALID_CATEGORY", "Указанная категория не предназначена для услуг")
+                            ErrorResponse("INVALID_SPACE_ID", "spaceId должен быть положительным числом")
                         )
+                        return@post
+                    }
+
+                    val targetSpaceId = requestedSpaceId ?: user.defaultSpaceId ?: SpaceDefaults.DEFAULT_SPACE_ID
+
+                    try {
+                        spaceService.ensureMembership(targetSpaceId, userId)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
                         return@post
                     }
 
@@ -357,30 +421,11 @@ fun Route.serviceRoutes(
                         description = request.description,
                         categoryId = request.categoryId,
                         price = request.price,
-                        images = request.images
+                        images = request.images,
+                        spaceId = targetSpaceId
                     )
 
                     if (service != null) {
-                        // Получаем информацию о пользователе
-                        val user = userRepository.findById(userId)
-                        if (user == null) {
-                            call.respond(
-                                HttpStatusCode.InternalServerError,
-                                ErrorResponse("USER_NOT_FOUND", "Пользователь не найден")
-                            )
-                            return@post
-                        }
-
-                        // Получаем информацию о категории (уже проверяли выше, но на всякий случай)
-                        val categoryInfo = categoryRepository.findById(service.categoryId)
-                        if (categoryInfo == null) {
-                            call.respond(
-                                HttpStatusCode.InternalServerError,
-                                ErrorResponse("CATEGORY_NOT_FOUND", "Категория не найдена")
-                            )
-                            return@post
-                        }
-
                         val response = ServiceResponse(
                             service = service,
                             user = UserPublicInfo(
@@ -392,9 +437,9 @@ fun Route.serviceRoutes(
                                 isVerified = user.isVerified
                             ),
                             category = CategoryInfo(
-                                id = categoryInfo.id,
-                                name = categoryInfo.name,
-                                icon = categoryInfo.icon
+                                id = category.id,
+                                name = category.name,
+                                icon = category.icon
                             )
                         )
 
@@ -432,12 +477,27 @@ fun Route.serviceRoutes(
                         return@put
                     }
 
-                    // Проверяем, что услуга принадлежит пользователю
-                    if (!serviceRepository.isOwner(userId, serviceId)) {
+                    val existingService = serviceRepository.findById(serviceId)
+                    if (existingService == null) {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            ErrorResponse("SERVICE_NOT_FOUND", "Услуга не найдена")
+                        )
+                        return@put
+                    }
+
+                    if (existingService.userId != userId) {
                         call.respond(
                             HttpStatusCode.Forbidden,
                             ErrorResponse("FORBIDDEN", "Нет прав для редактирования этой услуги")
                         )
+                        return@put
+                    }
+
+                    try {
+                        spaceService.ensureMembership(existingService.spaceId, userId)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
                         return@put
                     }
 
@@ -483,6 +543,14 @@ fun Route.serviceRoutes(
                             )
                             return@put
                         }
+                    }
+
+                    if (request.spaceId != null && request.spaceId != existingService.spaceId) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse("SPACE_CHANGE_NOT_SUPPORTED", "Перемещение услуги между пространствами пока не поддерживается")
+                        )
+                        return@put
                     }
 
                     val updatedService = serviceRepository.updateService(
@@ -567,12 +635,27 @@ fun Route.serviceRoutes(
                         return@delete
                     }
 
-                    // Проверяем, что услуга принадлежит пользователю
-                    if (!serviceRepository.isOwner(userId, serviceId)) {
+                    val service = serviceRepository.findById(serviceId)
+                    if (service == null) {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            ErrorResponse("SERVICE_NOT_FOUND", "Услуга не найдена")
+                        )
+                        return@delete
+                    }
+
+                    if (service.userId != userId) {
                         call.respond(
                             HttpStatusCode.Forbidden,
                             ErrorResponse("FORBIDDEN", "Нет прав для удаления этой услуги")
                         )
+                        return@delete
+                    }
+
+                    try {
+                        spaceService.ensureMembership(service.spaceId, userId)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
                         return@delete
                     }
 

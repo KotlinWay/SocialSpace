@@ -2,6 +2,7 @@ package info.javaway.sc.backend.plugins
 
 import info.javaway.sc.backend.data.tables.*
 import info.javaway.sc.backend.repository.CategoryRepository
+import info.javaway.sc.backend.services.SpaceBootstrapper
 import io.ktor.server.application.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -25,11 +26,24 @@ fun Application.configureDatabase() {
     )
 
     transaction {
-        // Create tables if they don't exist
-        SchemaUtils.create(Users, Categories, Products, Services, Favorites)
+        val bootstrapper = SpaceBootstrapper(environment.log)
 
+        SchemaUtils.createMissingTablesAndColumns(Users)
+        SchemaUtils.createMissingTablesAndColumns(Categories)
+        SchemaUtils.createMissingTablesAndColumns(Spaces)
+
+        val (ownerId, spaceId) = bootstrapper.ensureDemoOwnerAndSpace()
+
+        SchemaUtils.createMissingTablesAndColumns(SpaceMembers)
+        SchemaUtils.createMissingTablesAndColumns(Products)
+        SchemaUtils.createMissingTablesAndColumns(Services)
+        SchemaUtils.createMissingTablesAndColumns(Favorites)
+
+        bootstrapper.ensureMembershipsAndData(spaceId, ownerId)
+
+        environment.log.info("Default space ensured: $spaceId")
         environment.log.info("Database configured: $jdbcURL")
-        environment.log.info("Tables created successfully")
+        environment.log.info("Tables created/updated successfully")
     }
 
     // Populate default categories if needed

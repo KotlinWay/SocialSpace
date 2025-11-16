@@ -14,6 +14,7 @@ import info.javaway.sc.shared.domain.models.ProductStatus
 fun ApiProductListItem.toDomain(): Product {
     return Product(
         id = id,
+        spaceId = spaceId,
         title = title,
         description = description,
         price = price,
@@ -35,6 +36,7 @@ fun ApiProductListItem.toDomain(): Product {
 fun ApiProductResponse.toDomain(): Product {
     return Product(
         id = product.id,
+        spaceId = product.spaceId,
         title = product.title,
         description = product.description,
         price = product.price,

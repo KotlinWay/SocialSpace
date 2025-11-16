@@ -21,6 +21,7 @@ fun ApiUser.toDomain(): User {
         avatar = avatar,
         bio = bio,
         rating = rating,
+        defaultSpaceId = defaultSpaceId,
         createdAt = createdAt,
         isVerified = isVerified,
         role = role.toDomain()

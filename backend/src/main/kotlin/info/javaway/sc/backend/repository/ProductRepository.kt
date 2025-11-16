@@ -1,17 +1,20 @@
 package info.javaway.sc.backend.repository
 
-import info.javaway.sc.backend.data.tables.Categories
 import info.javaway.sc.backend.data.tables.Favorites
 import info.javaway.sc.backend.data.tables.Products
-import info.javaway.sc.backend.data.tables.Users
+import info.javaway.sc.backend.data.tables.Spaces
 import info.javaway.sc.api.models.Product
 import info.javaway.sc.api.models.ProductCondition
 import info.javaway.sc.api.models.ProductStatus
+import info.javaway.sc.backend.utils.SpaceDefaults
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
+import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 
@@ -30,13 +33,15 @@ class ProductRepository {
         price: Double,
         categoryId: Long,
         condition: ProductCondition,
-        images: List<String>
+        images: List<String>,
+        spaceId: Long = SpaceDefaults.DEFAULT_SPACE_ID
     ): Product? = transaction {
         val now = Instant.now()
         val imagesJson = Json.encodeToString(images)
 
         val insertStatement = Products.insert {
             it[Products.userId] = userId
+            it[Products.spaceId] = EntityID(spaceId, Spaces)
             it[Products.title] = title
             it[Products.description] = description
             it[Products.price] = price
@@ -55,20 +60,25 @@ class ProductRepository {
     /**
      * Найти товар по ID
      */
-    fun findById(productId: Long): Product? = transaction {
-        Products.selectAll()
-            .where { Products.id eq productId }
-            .map { rowToProduct(it) }
-            .singleOrNull()
+    fun findById(productId: Long, spaceId: Long? = null): Product? = transaction {
+        var query = Products.selectAll().where { Products.id eq productId }
+        spaceId?.let { query = query.andWhere { Products.spaceId eq EntityID(it, Spaces) } }
+        query.map { rowToProduct(it) }.singleOrNull()
     }
 
     /**
      * Найти все товары пользователя
      */
-    fun findByUserId(userId: Long, limit: Int = 100, offset: Long = 0): List<Product> = transaction {
-        Products.selectAll()
-            .where { Products.userId eq userId }
-            .limit(limit)
+    fun findByUserId(
+        userId: Long,
+        spaceId: Long? = null,
+        limit: Int = 100,
+        offset: Long = 0
+    ): List<Product> = transaction {
+        var query = Products.selectAll().where { Products.userId eq userId }
+        spaceId?.let { query = query.andWhere { Products.spaceId eq EntityID(it, Spaces) } }
+
+        query.limit(limit)
             .offset(offset)
             .orderBy(Products.createdAt to SortOrder.DESC)
             .map { rowToProduct(it) }
@@ -78,6 +88,7 @@ class ProductRepository {
      * Получить все товары с фильтрацией и пагинацией
      */
     fun getAllProducts(
+        spaceId: Long,
         categoryId: Long? = null,
         status: ProductStatus? = null,
         condition: ProductCondition? = null,
@@ -88,49 +99,49 @@ class ProductRepository {
         offset: Long = 0
     ): List<Product> = transaction {
         println("🔍 ProductRepository.getAllProducts() вызван")
-        println("   categoryId=$categoryId, status=$status, condition=$condition")
+        println("   spaceId=$spaceId, categoryId=$categoryId, status=$status, condition=$condition")
         println("   minPrice=$minPrice, maxPrice=$maxPrice, searchQuery=$searchQuery")
         println("   limit=$limit, offset=$offset")
 
-        var query = Products.selectAll()
+        var query = Products.selectAll().where { Products.spaceId eq EntityID(spaceId, Spaces) }
 
         // Фильтр по категории
         categoryId?.let {
             println("   ✅ Применяется фильтр по categoryId: $it")
-            query = query.where { Products.categoryId eq it }
+            query = query.andWhere { Products.categoryId eq it }
         } ?: println("   ℹ️  Фильтр по categoryId НЕ применяется (categoryId == null) - вернем ВСЕ товары")
 
         // Фильтр по статусу
         status?.let {
             println("   ✅ Применяется фильтр по status: $it")
-            query = query.where { Products.status eq it }
+            query = query.andWhere { Products.status eq it }
         }
 
         // Фильтр по состоянию
         condition?.let {
             println("   ✅ Применяется фильтр по condition: $it")
-            query = query.where { Products.condition eq it }
+            query = query.andWhere { Products.condition eq it }
         }
 
         // Фильтр по минимальной цене
         minPrice?.let {
             println("   ✅ Применяется фильтр по minPrice: $it")
-            query = query.where { Products.price greaterEq it }
+            query = query.andWhere { Products.price greaterEq it }
         }
 
         // Фильтр по максимальной цене
         maxPrice?.let {
             println("   ✅ Применяется фильтр по maxPrice: $it")
-            query = query.where { Products.price lessEq it }
+            query = query.andWhere { Products.price lessEq it }
         }
 
         // Поиск по названию и описанию
         searchQuery?.let { search ->
             println("   ✅ Применяется поиск по запросу: $search")
             val searchPattern = "%${search.lowercase()}%"
-            query = query.where {
+            query = query.andWhere {
                 (Products.title.lowerCase() like searchPattern) or
-                (Products.description.lowerCase() like searchPattern)
+                    (Products.description.lowerCase() like searchPattern)
             }
         }
 
@@ -149,6 +160,7 @@ class ProductRepository {
      * Подсчитать общее количество товаров с учетом фильтров
      */
     fun countProducts(
+        spaceId: Long,
         categoryId: Long? = null,
         status: ProductStatus? = null,
         condition: ProductCondition? = null,
@@ -157,38 +169,38 @@ class ProductRepository {
         searchQuery: String? = null
     ): Long = transaction {
         println("🔢 ProductRepository.countProducts() вызван")
-        println("   categoryId=$categoryId, status=$status, condition=$condition")
+        println("   spaceId=$spaceId, categoryId=$categoryId, status=$status, condition=$condition")
 
-        var query = Products.selectAll()
+        var query = Products.selectAll().where { Products.spaceId eq EntityID(spaceId, Spaces) }
 
         categoryId?.let {
             println("   ✅ Применяется фильтр по categoryId: $it")
-            query = query.where { Products.categoryId eq it }
+            query = query.andWhere { Products.categoryId eq it }
         } ?: println("   ℹ️  Фильтр по categoryId НЕ применяется (categoryId == null)")
 
         status?.let {
             println("   ✅ Применяется фильтр по status: $it")
-            query = query.where { Products.status eq it }
+            query = query.andWhere { Products.status eq it }
         }
         condition?.let {
             println("   ✅ Применяется фильтр по condition: $it")
-            query = query.where { Products.condition eq it }
+            query = query.andWhere { Products.condition eq it }
         }
         minPrice?.let {
             println("   ✅ Применяется фильтр по minPrice: $it")
-            query = query.where { Products.price greaterEq it }
+            query = query.andWhere { Products.price greaterEq it }
         }
         maxPrice?.let {
             println("   ✅ Применяется фильтр по maxPrice: $it")
-            query = query.where { Products.price lessEq it }
+            query = query.andWhere { Products.price lessEq it }
         }
 
         searchQuery?.let { search ->
             println("   ✅ Применяется поиск по запросу: $search")
             val searchPattern = "%${search.lowercase()}%"
-            query = query.where {
+            query = query.andWhere {
                 (Products.title.lowerCase() like searchPattern) or
-                (Products.description.lowerCase() like searchPattern)
+                    (Products.description.lowerCase() like searchPattern)
             }
         }
 
@@ -287,11 +299,18 @@ class ProductRepository {
     /**
      * Получить избранные товары пользователя
      */
-    fun getFavorites(userId: Long, limit: Int = 100, offset: Long = 0): List<Product> = transaction {
-        (Products innerJoin Favorites)
+    fun getFavorites(
+        userId: Long,
+        spaceId: Long? = null,
+        limit: Int = 100,
+        offset: Long = 0
+    ): List<Product> = transaction {
+        val query = (Products innerJoin Favorites)
             .select(Products.columns)
             .where { Favorites.userId eq userId }
-            .limit(limit)
+        spaceId?.let { query.andWhere { Products.spaceId eq EntityID(it, Spaces) } }
+
+        query.limit(limit)
             .offset(offset)
             .orderBy(Favorites.createdAt to SortOrder.DESC)
             .map { rowToProduct(it) }
@@ -300,18 +319,18 @@ class ProductRepository {
     /**
      * Подсчитать количество избранных товаров пользователя
      */
-    fun countFavorites(userId: Long): Long = transaction {
-        Favorites.selectAll()
-            .where { Favorites.userId eq userId }
-            .count()
+    fun countFavorites(userId: Long, spaceId: Long? = null): Long = transaction {
+        val query = (Favorites innerJoin Products)
+            .selectAll().where { Favorites.userId eq userId }
+        spaceId?.let { query.andWhere { Products.spaceId eq EntityID(it, Spaces) } }
+        query.count()
     }
 
     /**
      * Проверить, принадлежит ли товар пользователю
      */
     fun isOwner(userId: Long, productId: Long): Boolean = transaction {
-        Products.selectAll()
-            .where { (Products.id eq productId) and (Products.userId eq userId) }
+        Products.selectAll().where { (Products.id eq productId) and (Products.userId eq userId) }
             .count() > 0
     }
 
@@ -329,6 +348,7 @@ class ProductRepository {
         return Product(
             id = row[Products.id].value,
             userId = row[Products.userId].value,
+            spaceId = row[Products.spaceId].value,
             title = row[Products.title],
             description = row[Products.description],
             price = row[Products.price],

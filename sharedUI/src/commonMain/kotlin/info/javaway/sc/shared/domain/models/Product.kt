@@ -6,6 +6,7 @@ package info.javaway.sc.shared.domain.models
  */
 data class Product(
     val id: Long,
+    val spaceId: Long,
     val title: String,
     val description: String,
     val price: Double,

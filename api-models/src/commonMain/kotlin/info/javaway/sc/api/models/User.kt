@@ -14,6 +14,7 @@ data class User(
     val avatar: String? = null,
     val bio: String? = null,
     val rating: Double? = null,
+    val defaultSpaceId: Long? = null,
     val createdAt: String,
     val isVerified: Boolean = false,
     val role: UserRole = UserRole.USER

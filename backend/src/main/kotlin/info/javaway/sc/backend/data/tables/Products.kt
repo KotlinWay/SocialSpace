@@ -2,12 +2,15 @@ package info.javaway.sc.backend.data.tables
 
 import info.javaway.sc.api.models.ProductCondition
 import info.javaway.sc.api.models.ProductStatus
+import info.javaway.sc.backend.utils.SpaceDefaults
+import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant
 
 object Products : LongIdTable("products") {
     val userId = reference("user_id", Users)
+    val spaceId = reference("space_id", Spaces).default(EntityID(SpaceDefaults.DEFAULT_SPACE_ID, Spaces))
     val title = varchar("title", 200)
     val description = text("description")
     val price = double("price")

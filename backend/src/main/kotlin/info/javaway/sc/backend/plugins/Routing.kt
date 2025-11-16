@@ -4,6 +4,7 @@ import info.javaway.sc.backend.routes.authRoutes
 import info.javaway.sc.backend.routes.categoryRoutes
 import info.javaway.sc.backend.routes.fileRoutes
 import info.javaway.sc.backend.routes.productRoutes
+import info.javaway.sc.backend.routes.spaceRoutes
 import info.javaway.sc.backend.routes.serviceRoutes
 import info.javaway.sc.backend.routes.userRoutes
 import io.ktor.server.application.*
@@ -36,6 +37,9 @@ fun Application.configureRouting() {
 
             // Услуги (CRUD, поиск)
             serviceRoutes()
+
+            // Пространства (список, создание, вступление)
+            spaceRoutes()
 
             // Загрузка файлов (изображения для товаров, услуг, аватары)
             fileRoutes()

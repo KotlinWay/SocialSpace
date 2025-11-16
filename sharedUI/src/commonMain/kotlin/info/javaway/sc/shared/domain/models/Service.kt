@@ -5,6 +5,7 @@ package info.javaway.sc.shared.domain.models
  */
 data class Service(
     val id: Long,
+    val spaceId: Long,
     val title: String,
     val description: String,
     val price: String?, // "1000" или "Договорная"

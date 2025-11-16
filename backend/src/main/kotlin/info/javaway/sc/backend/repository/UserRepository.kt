@@ -1,8 +1,9 @@
 package info.javaway.sc.backend.repository
 
-import info.javaway.sc.backend.data.tables.Users
 import info.javaway.sc.api.models.User
 import info.javaway.sc.api.models.UserRole
+import info.javaway.sc.backend.data.tables.Users
+import info.javaway.sc.backend.utils.SpaceDefaults
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -21,13 +22,15 @@ class UserRepository {
         email: String?,
         name: String,
         passwordHash: String,
-        role: UserRole = UserRole.USER
+        role: UserRole = UserRole.USER,
+        defaultSpaceId: Long = SpaceDefaults.DEFAULT_SPACE_ID
     ): User? = transaction {
         val insertStatement = Users.insert {
             it[Users.phone] = phone
             it[Users.email] = email
             it[Users.name] = name
             it[Users.passwordHash] = passwordHash
+            it[Users.defaultSpaceId] = defaultSpaceId
             it[Users.createdAt] = Instant.now()
             it[Users.role] = role
         }
@@ -176,6 +179,7 @@ class UserRepository {
             avatar = row[Users.avatar],
             bio = row[Users.bio],
             rating = row[Users.rating],
+            defaultSpaceId = row[Users.defaultSpaceId],
             createdAt = row[Users.createdAt].toString(),
             isVerified = row[Users.isVerified],
             role = row[Users.role]

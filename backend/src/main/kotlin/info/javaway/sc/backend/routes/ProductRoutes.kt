@@ -4,6 +4,9 @@ import info.javaway.sc.api.models.*
 import info.javaway.sc.backend.repository.CategoryRepository
 import info.javaway.sc.backend.repository.ProductRepository
 import info.javaway.sc.backend.repository.UserRepository
+import info.javaway.sc.backend.services.SpaceService
+import info.javaway.sc.backend.services.SpaceService.SpaceException
+import info.javaway.sc.backend.utils.SpaceDefaults
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -19,8 +22,22 @@ import kotlin.math.ceil
 fun Route.productRoutes(
     productRepository: ProductRepository = ProductRepository(),
     userRepository: UserRepository = UserRepository(),
-    categoryRepository: CategoryRepository = CategoryRepository()
+    categoryRepository: CategoryRepository = CategoryRepository(),
+    spaceService: SpaceService = SpaceService()
 ) {
+    suspend fun ApplicationCall.resolveSpaceIdOrRespond(): Long? {
+        val param = request.queryParameters["spaceId"]
+        if (param.isNullOrBlank()) {
+            return SpaceDefaults.DEFAULT_SPACE_ID
+        }
+        return param.toLongOrNull() ?: run {
+            respond(
+                HttpStatusCode.BadRequest,
+                ErrorResponse("INVALID_SPACE_ID", "Некорректный spaceId")
+            )
+            null
+        }
+    }
 
     route("/products") {
 
@@ -39,6 +56,8 @@ fun Route.productRoutes(
          * - pageSize: Int? - размер страницы (по умолчанию 20, максимум 100)
          */
         get {
+            val spaceId = call.resolveSpaceIdOrRespond() ?: return@get
+
             try {
                 println("🌐 GET /api/products - Получен запрос")
                 println("   Query parameters: ${call.request.queryParameters}")
@@ -53,6 +72,7 @@ fun Route.productRoutes(
                 val pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull()?.coerceIn(1, 100) ?: 20
 
                 println("   Распарсены параметры:")
+                println("   - spaceId: $spaceId")
                 println("   - categoryId: $categoryId")
                 println("   - status: $statusStr")
                 println("   - condition: $conditionStr")
@@ -62,7 +82,6 @@ fun Route.productRoutes(
                 println("   - page: $page")
                 println("   - pageSize: $pageSize")
 
-                // Валидация page
                 if (page < 1) {
                     call.respond(
                         HttpStatusCode.BadRequest,
@@ -71,28 +90,31 @@ fun Route.productRoutes(
                     return@get
                 }
 
-                // Парсинг enum значений
                 val status = statusStr?.let {
-                    try {
-                        ProductStatus.valueOf(it)
-                    } catch (e: IllegalArgumentException) {
-                        null
-                    }
+                    runCatching { ProductStatus.valueOf(it) }.getOrNull()
                 }
 
                 val condition = conditionStr?.let {
-                    try {
-                        ProductCondition.valueOf(it)
-                    } catch (e: IllegalArgumentException) {
-                        null
-                    }
+                    runCatching { ProductCondition.valueOf(it) }.getOrNull()
                 }
 
                 val offset = ((page - 1) * pageSize).toLong()
 
+                val principal = call.principal<JWTPrincipal>()
+                val currentUserId = principal?.payload?.getClaim("userId")?.asLong()
+
+                currentUserId?.let {
+                    try {
+                        spaceService.ensureMembership(spaceId, it)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
+                        return@get
+                    }
+                }
+
                 println("   📞 Вызов productRepository.getAllProducts()...")
-                // Получаем товары и их количество
                 val products = productRepository.getAllProducts(
+                    spaceId = spaceId,
                     categoryId = categoryId,
                     status = status,
                     condition = condition,
@@ -105,6 +127,7 @@ fun Route.productRoutes(
 
                 println("   📞 Вызов productRepository.countProducts()...")
                 val total = productRepository.countProducts(
+                    spaceId = spaceId,
                     categoryId = categoryId,
                     status = status,
                     condition = condition,
@@ -115,35 +138,21 @@ fun Route.productRoutes(
 
                 val totalPages = ceil(total.toDouble() / pageSize).toInt()
 
-                // Получаем ID текущего пользователя (если авторизован)
-                val principal = call.principal<JWTPrincipal>()
-                val currentUserId = principal?.payload?.getClaim("userId")?.asLong()
-
                 println("   🔄 Формирование расширенных данных для ${products.size} товаров...")
 
-                // Формируем расширенные данные для каждого товара
                 val productListItems = products.mapNotNull { product ->
-                    // Загружаем пользователя
                     val user = userRepository.findById(product.userId)
-                    if (user == null) {
-                        println("   ⚠️  Пользователь ${product.userId} не найден для товара ${product.id}")
-                        return@mapNotNull null
-                    }
-
-                    // Загружаем категорию
+                        ?: return@mapNotNull null
                     val category = categoryRepository.findById(product.categoryId)
-                    if (category == null) {
-                        println("   ⚠️  Категория ${product.categoryId} не найдена для товара ${product.id}")
-                        return@mapNotNull null
-                    }
+                        ?: return@mapNotNull null
 
-                    // Проверяем, в избранном ли товар
                     val isFavorite = currentUserId?.let {
                         productRepository.isFavorite(it, product.id)
                     } ?: false
 
                     ProductListItem(
                         id = product.id,
+                        spaceId = product.spaceId,
                         title = product.title,
                         description = product.description,
                         price = product.price,
@@ -214,6 +223,18 @@ fun Route.productRoutes(
                     return@get
                 }
 
+                val principal = call.principal<JWTPrincipal>()
+                val currentUserId = principal?.payload?.getClaim("userId")?.asLong()
+
+                currentUserId?.let {
+                    try {
+                        spaceService.ensureMembership(product.spaceId, it)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
+                        return@get
+                    }
+                }
+
                 // Увеличиваем счетчик просмотров
                 productRepository.incrementViews(productId)
 
@@ -238,8 +259,6 @@ fun Route.productRoutes(
                 }
 
                 // Проверяем, авторизован ли пользователь и в избранном ли товар
-                val principal = call.principal<JWTPrincipal>()
-                val currentUserId = principal?.payload?.getClaim("userId")?.asLong()
                 val isFavorite = currentUserId?.let { productRepository.isFavorite(it, productId) } ?: false
 
                 val response = ProductResponse(
@@ -280,6 +299,8 @@ fun Route.productRoutes(
              * Получить список товаров текущего пользователя
              */
             get("/my") {
+                val spaceId = call.resolveSpaceIdOrRespond() ?: return@get
+
                 try {
                     val principal = call.principal<JWTPrincipal>()
                     val userId = principal?.payload?.getClaim("userId")?.asLong()
@@ -292,29 +313,37 @@ fun Route.productRoutes(
                         return@get
                     }
 
+                    try {
+                        spaceService.ensureMembership(spaceId, userId)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
+                        return@get
+                    }
+
                     val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
                     val pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull()?.coerceIn(1, 100) ?: 20
                     val offset = ((page - 1) * pageSize).toLong()
 
-                    val products = productRepository.findByUserId(userId, limit = pageSize, offset = offset)
+                    val products = productRepository.findByUserId(
+                        userId = userId,
+                        spaceId = spaceId,
+                        limit = pageSize,
+                        offset = offset
+                    )
 
-                    // Преобразуем List<Product> в List<ProductResponse>
                     val productResponses = products.map { product ->
-                        // Получаем информацию о пользователе
                         val user = userRepository.findById(product.userId)
                             ?: return@get call.respond(
                                 HttpStatusCode.InternalServerError,
                                 ErrorResponse("USER_NOT_FOUND", "Пользователь не найден")
                             )
 
-                        // Получаем информацию о категории
                         val category = categoryRepository.findById(product.categoryId)
                             ?: return@get call.respond(
                                 HttpStatusCode.InternalServerError,
                                 ErrorResponse("CATEGORY_NOT_FOUND", "Категория не найдена")
                             )
 
-                        // Проверяем, добавлен ли товар в избранное (для текущего пользователя это всегда его товары)
                         val isFavorite = productRepository.isFavorite(userId, product.id)
 
                         ProductResponse(
@@ -414,21 +443,39 @@ fun Route.productRoutes(
                         return@post
                     }
 
-                    // Проверяем существование категории
                     val category = categoryRepository.findById(request.categoryId)
-                    if (category == null) {
+                    if (category == null || category.type != CategoryType.PRODUCT) {
                         call.respond(
                             HttpStatusCode.BadRequest,
-                            ErrorResponse("INVALID_CATEGORY", "Категория не найдена")
+                            ErrorResponse("INVALID_CATEGORY", "Неверная категория товара")
                         )
                         return@post
                     }
 
-                    if (category.type != CategoryType.PRODUCT) {
+                    val user = userRepository.findById(userId)
+                    if (user == null) {
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            ErrorResponse("USER_NOT_FOUND", "Пользователь не найден")
+                        )
+                        return@post
+                    }
+
+                    val requestedSpaceId = request.spaceId
+                    if (requestedSpaceId != null && requestedSpaceId <= 0) {
                         call.respond(
                             HttpStatusCode.BadRequest,
-                            ErrorResponse("INVALID_CATEGORY", "Указанная категория не предназначена для товаров")
+                            ErrorResponse("INVALID_SPACE_ID", "spaceId должен быть положительным числом")
                         )
+                        return@post
+                    }
+
+                    val targetSpaceId = requestedSpaceId ?: user.defaultSpaceId ?: SpaceDefaults.DEFAULT_SPACE_ID
+
+                    try {
+                        spaceService.ensureMembership(targetSpaceId, userId)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
                         return@post
                     }
 
@@ -439,30 +486,11 @@ fun Route.productRoutes(
                         price = request.price,
                         categoryId = request.categoryId,
                         condition = request.condition,
-                        images = request.images
+                        images = request.images,
+                        spaceId = targetSpaceId
                     )
 
                     if (product != null) {
-                        // Получаем информацию о пользователе
-                        val user = userRepository.findById(userId)
-                        if (user == null) {
-                            call.respond(
-                                HttpStatusCode.InternalServerError,
-                                ErrorResponse("USER_NOT_FOUND", "Пользователь не найден")
-                            )
-                            return@post
-                        }
-
-                        // Получаем информацию о категории (уже проверяли выше, но на всякий случай)
-                        val categoryInfo = categoryRepository.findById(product.categoryId)
-                        if (categoryInfo == null) {
-                            call.respond(
-                                HttpStatusCode.InternalServerError,
-                                ErrorResponse("CATEGORY_NOT_FOUND", "Категория не найдена")
-                            )
-                            return@post
-                        }
-
                         val response = ProductResponse(
                             product = product,
                             user = UserPublicInfo(
@@ -474,9 +502,9 @@ fun Route.productRoutes(
                                 isVerified = user.isVerified
                             ),
                             category = CategoryInfo(
-                                id = categoryInfo.id,
-                                name = categoryInfo.name,
-                                icon = categoryInfo.icon
+                                id = category.id,
+                                name = category.name,
+                                icon = category.icon
                             ),
                             isFavorite = false
                         )
@@ -515,12 +543,27 @@ fun Route.productRoutes(
                         return@put
                     }
 
-                    // Проверяем, что товар принадлежит пользователю
-                    if (!productRepository.isOwner(userId, productId)) {
+                    val existingProduct = productRepository.findById(productId)
+                    if (existingProduct == null) {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            ErrorResponse("PRODUCT_NOT_FOUND", "Товар не найден")
+                        )
+                        return@put
+                    }
+
+                    if (existingProduct.userId != userId) {
                         call.respond(
                             HttpStatusCode.Forbidden,
                             ErrorResponse("FORBIDDEN", "Нет прав для редактирования этого товара")
                         )
+                        return@put
+                    }
+
+                    try {
+                        spaceService.ensureMembership(existingProduct.spaceId, userId)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
                         return@put
                     }
 
@@ -576,6 +619,14 @@ fun Route.productRoutes(
                             )
                             return@put
                         }
+                    }
+
+                    if (request.spaceId != null && request.spaceId != existingProduct.spaceId) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse("SPACE_CHANGE_NOT_SUPPORTED", "Перемещение товара между пространствами пока не поддерживается")
+                        )
+                        return@put
                     }
 
                     val updatedProduct = productRepository.updateProduct(
@@ -665,12 +716,27 @@ fun Route.productRoutes(
                         return@delete
                     }
 
-                    // Проверяем, что товар принадлежит пользователю
-                    if (!productRepository.isOwner(userId, productId)) {
+                    val product = productRepository.findById(productId)
+                    if (product == null) {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            ErrorResponse("PRODUCT_NOT_FOUND", "Товар не найден")
+                        )
+                        return@delete
+                    }
+
+                    if (product.userId != userId) {
                         call.respond(
                             HttpStatusCode.Forbidden,
                             ErrorResponse("FORBIDDEN", "Нет прав для удаления этого товара")
                         )
+                        return@delete
+                    }
+
+                    try {
+                        spaceService.ensureMembership(product.spaceId, userId)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
                         return@delete
                     }
 
@@ -723,6 +789,13 @@ fun Route.productRoutes(
                         return@post
                     }
 
+                    try {
+                        spaceService.ensureMembership(product.spaceId, userId)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
+                        return@post
+                    }
+
                     val added = productRepository.addToFavorites(userId, productId)
                     if (added) {
                         call.respond(
@@ -762,6 +835,22 @@ fun Route.productRoutes(
                         return@delete
                     }
 
+                    val product = productRepository.findById(productId)
+                    if (product == null) {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            ErrorResponse("PRODUCT_NOT_FOUND", "Товар не найден")
+                        )
+                        return@delete
+                    }
+
+                    try {
+                        spaceService.ensureMembership(product.spaceId, userId)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
+                        return@delete
+                    }
+
                     val removed = productRepository.removeFromFavorites(userId, productId)
                     if (removed) {
                         call.respond(
@@ -788,6 +877,8 @@ fun Route.productRoutes(
              * Получить список избранных товаров
              */
             get("/favorites") {
+                val spaceId = call.resolveSpaceIdOrRespond() ?: return@get
+
                 try {
                     val principal = call.principal<JWTPrincipal>()
                     val userId = principal?.payload?.getClaim("userId")?.asLong()
@@ -800,17 +891,27 @@ fun Route.productRoutes(
                         return@get
                     }
 
+                    try {
+                        spaceService.ensureMembership(spaceId, userId)
+                    } catch (e: SpaceException) {
+                        call.respond(e.status, ErrorResponse(e.code, e.message))
+                        return@get
+                    }
+
                     val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
                     val pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull()?.coerceIn(1, 100) ?: 20
                     val offset = ((page - 1) * pageSize).toLong()
 
-                    val favorites = productRepository.getFavorites(userId, limit = pageSize, offset = offset)
-                    val total = productRepository.countFavorites(userId)
+                    val favorites = productRepository.getFavorites(
+                        userId = userId,
+                        spaceId = spaceId,
+                        limit = pageSize,
+                        offset = offset
+                    )
+                    val total = productRepository.countFavorites(userId, spaceId)
                     val totalPages = ceil(total.toDouble() / pageSize).toInt()
 
-                    // Формируем расширенные данные для каждого избранного товара
                     val favoriteListItems = favorites.mapNotNull { product ->
-                        // Загружаем пользователя
                         val user = userRepository.findById(product.userId)
                         if (user == null) {
                             return@mapNotNull null
@@ -824,6 +925,7 @@ fun Route.productRoutes(
 
                         ProductListItem(
                             id = product.id,
+                            spaceId = product.spaceId,
                             title = product.title,
                             description = product.description,
                             price = product.price,

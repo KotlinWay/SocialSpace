@@ -12,7 +12,8 @@ data class CreateProductRequest(
     val price: Double,
     val categoryId: Long,
     val condition: ProductCondition,
-    val images: List<String>
+    val images: List<String>,
+    val spaceId: Long? = null
 )
 
 /**
@@ -26,7 +27,8 @@ data class UpdateProductRequest(
     val categoryId: Long? = null,
     val condition: ProductCondition? = null,
     val status: ProductStatus? = null,
-    val images: List<String>? = null
+    val images: List<String>? = null,
+    val spaceId: Long? = null
 )
 
 /**
@@ -46,6 +48,7 @@ data class ProductResponse(
 @Serializable
 data class ProductListItem(
     val id: Long,
+    val spaceId: Long,
     val title: String,
     val description: String,
     val price: Double,

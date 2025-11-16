@@ -11,7 +11,8 @@ data class CreateServiceRequest(
     val description: String,
     val categoryId: Long,
     val price: String? = null,
-    val images: List<String>
+    val images: List<String>,
+    val spaceId: Long? = null
 )
 
 /**
@@ -24,7 +25,8 @@ data class UpdateServiceRequest(
     val categoryId: Long? = null,
     val price: String? = null,
     val status: ServiceStatus? = null,
-    val images: List<String>? = null
+    val images: List<String>? = null,
+    val spaceId: Long? = null
 )
 
 /**
@@ -43,6 +45,7 @@ data class ServiceResponse(
 @Serializable
 data class ServiceListItem(
     val id: Long,
+    val spaceId: Long,
     val title: String,
     val description: String,
     val price: String?,

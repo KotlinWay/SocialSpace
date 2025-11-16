@@ -1,9 +1,17 @@
 package info.javaway.sc.backend.services
 
 import info.javaway.sc.api.models.*
+import info.javaway.sc.backend.data.tables.SpaceMembers
+import info.javaway.sc.backend.data.tables.Spaces
+import info.javaway.sc.backend.data.tables.Users
 import info.javaway.sc.backend.repository.UserRepository
+import info.javaway.sc.backend.utils.SpaceDefaults
 import info.javaway.sc.backend.utils.JwtConfig
 import info.javaway.sc.backend.utils.PasswordHasher
+import info.javaway.sc.api.models.SpaceMemberRole
+import org.jetbrains.exposed.dao.id.EntityID
+import org.jetbrains.exposed.sql.insertIgnore
+import java.time.Instant
 
 /**
  * Сервис аутентификации и авторизации
@@ -59,6 +67,13 @@ class AuthService(
             name = request.name,
             passwordHash = passwordHash
         ) ?: return AuthResult.Error("Ошибка при создании пользователя")
+
+        SpaceMembers.insertIgnore {
+            it[SpaceMembers.spaceId] = EntityID(SpaceDefaults.DEFAULT_SPACE_ID, Spaces)
+            it[SpaceMembers.userId] = EntityID(user.id, Users)
+            it[SpaceMembers.role] = SpaceMemberRole.MEMBER
+            it[SpaceMembers.joinedAt] = Instant.now()
+        }
 
         // Генерация JWT токена
         val token = JwtConfig.makeToken(user.id)

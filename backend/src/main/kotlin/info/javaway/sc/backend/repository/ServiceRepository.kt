@@ -1,13 +1,18 @@
 package info.javaway.sc.backend.repository
 
 import info.javaway.sc.backend.data.tables.Services
+import info.javaway.sc.backend.data.tables.Spaces
 import info.javaway.sc.api.models.Service
 import info.javaway.sc.api.models.ServiceStatus
+import info.javaway.sc.backend.utils.SpaceDefaults
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
+import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 
@@ -25,13 +30,15 @@ class ServiceRepository {
         description: String,
         categoryId: Long,
         price: String?,
-        images: List<String>
+        images: List<String>,
+        spaceId: Long = SpaceDefaults.DEFAULT_SPACE_ID
     ): Service? = transaction {
         val now = Instant.now()
         val imagesJson = Json.encodeToString(images)
 
         val insertStatement = Services.insert {
             it[Services.userId] = userId
+            it[Services.spaceId] = EntityID(spaceId, Spaces)
             it[Services.title] = title
             it[Services.description] = description
             it[Services.categoryId] = categoryId
@@ -49,20 +56,25 @@ class ServiceRepository {
     /**
      * Найти услугу по ID
      */
-    fun findById(serviceId: Long): Service? = transaction {
-        Services.selectAll()
-            .where { Services.id eq serviceId }
-            .map { rowToService(it) }
-            .singleOrNull()
+    fun findById(serviceId: Long, spaceId: Long? = null): Service? = transaction {
+        var query = Services.selectAll().where { Services.id eq serviceId }
+        spaceId?.let { query = query.andWhere { Services.spaceId eq EntityID(it, Spaces) } }
+        query.map { rowToService(it) }.singleOrNull()
     }
 
     /**
      * Найти все услуги пользователя
      */
-    fun findByUserId(userId: Long, limit: Int = 100, offset: Long = 0): List<Service> = transaction {
-        Services.selectAll()
-            .where { Services.userId eq userId }
-            .limit(limit)
+    fun findByUserId(
+        userId: Long,
+        spaceId: Long? = null,
+        limit: Int = 100,
+        offset: Long = 0
+    ): List<Service> = transaction {
+        var query = Services.selectAll().where { Services.userId eq userId }
+        spaceId?.let { query = query.andWhere { Services.spaceId eq EntityID(it, Spaces) } }
+
+        query.limit(limit)
             .offset(offset)
             .orderBy(Services.createdAt to SortOrder.DESC)
             .map { rowToService(it) }
@@ -72,26 +84,27 @@ class ServiceRepository {
      * Получить все услуги с фильтрацией и пагинацией
      */
     fun getAllServices(
+        spaceId: Long,
         categoryId: Long? = null,
         status: ServiceStatus? = null,
         searchQuery: String? = null,
         limit: Int = 20,
         offset: Long = 0
     ): List<Service> = transaction {
-        var query = Services.selectAll()
+        var query = Services.selectAll().where { Services.spaceId eq EntityID(spaceId, Spaces) }
 
         // Фильтр по категории
-        categoryId?.let { query = query.where { Services.categoryId eq it } }
+        categoryId?.let { query = query.andWhere { Services.categoryId eq it } }
 
         // Фильтр по статусу
-        status?.let { query = query.where { Services.status eq it } }
+        status?.let { query = query.andWhere { Services.status eq it } }
 
         // Поиск по названию и описанию
         searchQuery?.let { search ->
             val searchPattern = "%${search.lowercase()}%"
-            query = query.where {
+            query = query.andWhere {
                 (Services.title.lowerCase() like searchPattern) or
-                (Services.description.lowerCase() like searchPattern)
+                    (Services.description.lowerCase() like searchPattern)
             }
         }
 
@@ -106,20 +119,21 @@ class ServiceRepository {
      * Подсчитать общее количество услуг с учетом фильтров
      */
     fun countServices(
+        spaceId: Long,
         categoryId: Long? = null,
         status: ServiceStatus? = null,
         searchQuery: String? = null
     ): Long = transaction {
-        var query = Services.selectAll()
+        var query = Services.selectAll().where { Services.spaceId eq EntityID(spaceId, Spaces) }
 
-        categoryId?.let { query = query.where { Services.categoryId eq it } }
-        status?.let { query = query.where { Services.status eq it } }
+        categoryId?.let { query = query.andWhere { Services.categoryId eq it } }
+        status?.let { query = query.andWhere { Services.status eq it } }
 
         searchQuery?.let { search ->
             val searchPattern = "%${search.lowercase()}%"
-            query = query.where {
+            query = query.andWhere {
                 (Services.title.lowerCase() like searchPattern) or
-                (Services.description.lowerCase() like searchPattern)
+                    (Services.description.lowerCase() like searchPattern)
             }
         }
 
@@ -175,8 +189,7 @@ class ServiceRepository {
      * Проверить, принадлежит ли услуга пользователю
      */
     fun isOwner(userId: Long, serviceId: Long): Boolean = transaction {
-        Services.selectAll()
-            .where { (Services.id eq serviceId) and (Services.userId eq userId) }
+        Services.selectAll().where { (Services.id eq serviceId) and (Services.userId eq userId) }
             .count() > 0
     }
 
@@ -194,6 +207,7 @@ class ServiceRepository {
         return Service(
             id = row[Services.id].value,
             userId = row[Services.userId].value,
+            spaceId = row[Services.spaceId].value,
             title = row[Services.title],
             description = row[Services.description],
             categoryId = row[Services.categoryId].value,

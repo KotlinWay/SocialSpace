@@ -12,6 +12,7 @@ import info.javaway.sc.shared.domain.models.ServiceStatus
 fun ApiServiceListItem.toDomain(): Service {
     return Service(
         id = id,
+        spaceId = spaceId,
         title = title,
         description = description,
         price = price,
@@ -31,6 +32,7 @@ fun ApiServiceListItem.toDomain(): Service {
 fun ApiServiceResponse.toDomain(): Service {
     return Service(
         id = service.id,
+        spaceId = service.spaceId,
         title = service.title,
         description = service.description,
         price = service.price,

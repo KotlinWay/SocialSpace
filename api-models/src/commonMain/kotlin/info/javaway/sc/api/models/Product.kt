@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 data class Product(
     val id: Long,
     val userId: Long,
+    val spaceId: Long,
     val title: String,
     val description: String,
     val price: Double,
