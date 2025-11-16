@@ -16,6 +16,7 @@ interface SpaceSelectionComponent {
     val effect: StateFlow<SpaceSelectionEffect?>
 
     fun refresh()
+    fun selectSpace(space: Space)
     fun joinSpace(space: Space, inviteCode: String? = null)
     fun createSpace(
         name: String,
@@ -47,7 +48,17 @@ class DefaultSpaceSelectionComponent(
         loadSpaces()
     }
 
+    override fun selectSpace(space: Space) {
+        spaceManager.selectSpace(space.id)
+        _effect.value = SpaceSelectionEffect.SpaceSelected
+    }
+
     override fun joinSpace(space: Space, inviteCode: String?) {
+        if (space.currentUserRole != null) {
+            selectSpace(space)
+            return
+        }
+
         componentScope.launch {
             _state.value = _state.value.copy(isJoining = true, error = null)
             spaceRepository.joinSpace(space.id, inviteCode)
@@ -100,11 +111,19 @@ class DefaultSpaceSelectionComponent(
     private fun loadSpaces() {
         componentScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
-            spaceRepository.getSpaces(type = SpaceType.PUBLIC)
+            spaceRepository.getSpaces()
                 .onSuccess { spaces ->
+                    val mySpaces = spaces
+                        .filter { it.currentUserRole != null }
+                        .sortedBy { it.name.lowercase() }
+                    val availableSpaces = spaces
+                        .filter { it.currentUserRole == null }
+                        .sortedByDescending { it.membersCount }
+
                     _state.value = _state.value.copy(
                         isLoading = false,
-                        spaces = spaces
+                        mySpaces = mySpaces,
+                        availableSpaces = availableSpaces
                     )
                 }
                 .onFailure { error ->
@@ -119,7 +138,8 @@ class DefaultSpaceSelectionComponent(
 
 data class SpaceSelectionUiState(
     val isLoading: Boolean = false,
-    val spaces: List<Space> = emptyList(),
+    val mySpaces: List<Space> = emptyList(),
+    val availableSpaces: List<Space> = emptyList(),
     val error: String? = null,
     val isJoining: Boolean = false,
     val isCreating: Boolean = false

@@ -11,6 +11,7 @@ import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
 import info.javaway.sc.shared.data.api.ApiClient
 import info.javaway.sc.shared.data.local.SpaceManager
+import info.javaway.sc.shared.data.local.ThemeManager
 import info.javaway.sc.shared.domain.repository.AuthRepository
 import info.javaway.sc.shared.domain.repository.CategoryRepository
 import info.javaway.sc.shared.domain.repository.ProductRepository
@@ -37,6 +38,8 @@ import info.javaway.sc.shared.presentation.screens.services.detail.ServiceDetail
 import info.javaway.sc.shared.presentation.screens.services.list.DefaultServiceListComponent
 import info.javaway.sc.shared.presentation.screens.services.list.ServiceListComponent
 import info.javaway.sc.shared.presentation.screens.services.DefaultEditServiceComponent
+import info.javaway.sc.shared.presentation.screens.settings.DefaultSettingsComponent
+import info.javaway.sc.shared.presentation.screens.settings.SettingsComponent
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -56,6 +59,7 @@ class MainComponent(
     private val authRepository: AuthRepository by inject()
     private val apiClient: ApiClient by inject()
     private val spaceManager: SpaceManager by inject()
+    private val themeManager: ThemeManager by inject()
 
     private val navigation = StackNavigation<Config>()
 
@@ -156,7 +160,10 @@ class MainComponent(
                 onMyServicesClick = {
                     navigation.pushNew(Config.MyServices)
                 },
-                onSwitchSpace = onSwitchSpace
+                onSwitchSpace = onSwitchSpace,
+                onOpenSettings = {
+                    navigation.pushNew(Config.Settings)
+                }
             )
             is Config.MyProducts -> Child.MyProducts(
                 component = DefaultMyProductsComponent(
@@ -218,6 +225,13 @@ class MainComponent(
                     navigation.pushNew(Config.ServiceDetail(serviceId))
                 }
             )
+            is Config.Settings -> Child.Settings(
+                component = DefaultSettingsComponent(
+                    componentContext = componentContext,
+                    themeManager = themeManager
+                ),
+                onBack = { navigation.pop() }
+            )
         }
 
     // Навигация между вкладками
@@ -275,7 +289,8 @@ class MainComponent(
             val onLogout: () -> Unit,
             val onMyProductsClick: () -> Unit,
             val onMyServicesClick: () -> Unit,
-            val onSwitchSpace: () -> Unit
+            val onSwitchSpace: () -> Unit,
+            val onOpenSettings: () -> Unit
         ) : Child()
 
         data class MyProducts(
@@ -304,6 +319,11 @@ class MainComponent(
             val component: EditServiceComponent,
             val onBack: () -> Unit,
             val onSuccess: (Long) -> Unit
+        ) : Child()
+
+        data class Settings(
+            val component: SettingsComponent,
+            val onBack: () -> Unit
         ) : Child()
     }
 
@@ -341,5 +361,8 @@ class MainComponent(
 
         @Serializable
         data class EditService(val serviceId: Long) : Config
+
+        @Serializable
+        data object Settings : Config
     }
 }

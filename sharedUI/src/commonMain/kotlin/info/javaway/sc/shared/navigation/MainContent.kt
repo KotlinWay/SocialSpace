@@ -33,6 +33,7 @@ import info.javaway.sc.shared.presentation.screens.services.list.ServiceListScre
 import info.javaway.sc.shared.presentation.screens.services.EditServiceScreen
 import info.javaway.sc.shared.presentation.screens.services.MyServicesScreen
 import info.javaway.sc.shared.utils.PhoneDialer
+import info.javaway.sc.shared.presentation.screens.settings.SettingsScreen
 import org.koin.compose.koinInject
 
 /**
@@ -140,7 +141,8 @@ fun MainContent(
                             onLogout = child.onLogout,
                             onMyProductsClick = child.onMyProductsClick,
                             onMyServicesClick = child.onMyServicesClick,
-                            onSwitchSpace = child.onSwitchSpace
+                            onSwitchSpace = child.onSwitchSpace,
+                            onOpenSettings = child.onOpenSettings
                         )
                     }
                     is MainComponent.Child.MyProducts -> {
@@ -173,6 +175,12 @@ fun MainContent(
                             component = child.component,
                             onBack = child.onBack,
                             onSuccess = child.onSuccess
+                        )
+                    }
+                    is MainComponent.Child.Settings -> {
+                        SettingsScreen(
+                            component = child.component,
+                            onBack = child.onBack
                         )
                     }
                 }

@@ -2,6 +2,7 @@ package info.javaway.sc.shared.di
 
 import info.javaway.sc.shared.data.api.ApiClient
 import info.javaway.sc.shared.data.local.SpaceManager
+import info.javaway.sc.shared.data.local.ThemeManager
 import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.data.repository.AuthRepositoryImpl
 import info.javaway.sc.shared.data.repository.CategoryRepositoryImpl
@@ -31,6 +32,9 @@ val dataModule = module {
 
     // SpaceManager для хранения выбранного пространства
     single { SpaceManager(get()) }
+
+    // ThemeManager для хранения пользовательской темы
+    single { ThemeManager(get()) }
 
     // ApiClient для работы с Backend API
     single {

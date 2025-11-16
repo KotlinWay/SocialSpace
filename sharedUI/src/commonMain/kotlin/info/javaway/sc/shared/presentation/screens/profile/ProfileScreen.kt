@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -54,6 +55,7 @@ fun ProfileScreen(
     onMyProductsClick: () -> Unit,
     onMyServicesClick: () -> Unit,
     onSwitchSpace: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by component.state.collectAsState()
@@ -88,7 +90,8 @@ fun ProfileScreen(
                         },
                         onMyProductsClick = onMyProductsClick,
                         onMyServicesClick = onMyServicesClick,
-                        onSwitchSpace = onSwitchSpace
+                        onSwitchSpace = onSwitchSpace,
+                        onOpenSettings = onOpenSettings
                     )
                 }
                 is ProfileState.Error -> {
@@ -112,6 +115,7 @@ private fun ProfileContent(
     onMyProductsClick: () -> Unit,
     onMyServicesClick: () -> Unit,
     onSwitchSpace: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -236,6 +240,21 @@ private fun ProfileContent(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text("Мои услуги")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = onOpenSettings,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Настройки")
         }
 
         Spacer(modifier = Modifier.height(24.dp))
