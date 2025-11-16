@@ -10,7 +10,7 @@ import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
 import info.javaway.sc.shared.data.api.ApiClient
-import info.javaway.sc.shared.data.local.TokenManager
+import info.javaway.sc.shared.data.local.SpaceManager
 import info.javaway.sc.shared.domain.repository.AuthRepository
 import info.javaway.sc.shared.domain.repository.CategoryRepository
 import info.javaway.sc.shared.domain.repository.ProductRepository
@@ -46,7 +46,8 @@ import org.koin.core.component.inject
  */
 class MainComponent(
     componentContext: ComponentContext,
-    private val onLogout: () -> Unit
+    private val onLogout: () -> Unit,
+    private val onSwitchSpace: () -> Unit
 ) : ComponentContext by componentContext, KoinComponent {
 
     private val productRepository: ProductRepository by inject()
@@ -54,7 +55,7 @@ class MainComponent(
     private val categoryRepository: CategoryRepository by inject()
     private val authRepository: AuthRepository by inject()
     private val apiClient: ApiClient by inject()
-    private val tokenManager: TokenManager by inject()
+    private val spaceManager: SpaceManager by inject()
 
     private val navigation = StackNavigation<Config>()
 
@@ -97,7 +98,8 @@ class MainComponent(
                 component = DefaultCreateProductComponent(
                     componentContext = componentContext,
                     apiClient = apiClient,
-                    categoryRepository = categoryRepository
+                    categoryRepository = categoryRepository,
+                    spaceManager = spaceManager
                 ),
                 onBack = { navigation.pop() },
                 onSuccess = { productId ->
@@ -133,7 +135,8 @@ class MainComponent(
                 component = DefaultCreateServiceComponent(
                     componentContext = componentContext,
                     apiClient = apiClient,
-                    categoryRepository = categoryRepository
+                    categoryRepository = categoryRepository,
+                    spaceManager = spaceManager
                 ),
                 onBack = { navigation.pop() },
                 onSuccess = { serviceId ->
@@ -144,8 +147,7 @@ class MainComponent(
             is Config.Profile -> Child.Profile(
                 component = DefaultProfileComponent(
                     componentContext = componentContext,
-                    authRepository = authRepository,
-                    tokenManager = tokenManager
+                    authRepository = authRepository
                 ),
                 onLogout = onLogout,
                 onMyProductsClick = {
@@ -153,7 +155,8 @@ class MainComponent(
                 },
                 onMyServicesClick = {
                     navigation.pushNew(Config.MyServices)
-                }
+                },
+                onSwitchSpace = onSwitchSpace
             )
             is Config.MyProducts -> Child.MyProducts(
                 component = DefaultMyProductsComponent(
@@ -271,7 +274,8 @@ class MainComponent(
             val component: ProfileComponent,
             val onLogout: () -> Unit,
             val onMyProductsClick: () -> Unit,
-            val onMyServicesClick: () -> Unit
+            val onMyServicesClick: () -> Unit,
+            val onSwitchSpace: () -> Unit
         ) : Child()
 
         data class MyProducts(

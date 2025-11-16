@@ -11,15 +11,18 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.statement.bodyAsText
 import io.ktor.utils.io.core.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.decodeFromString
 
 /**
  * HTTP клиент для работы с Backend API
  */
 class ApiClient(
     private val baseUrl: String = "http://10.0.2.2:8080", // Android Emulator localhost
-    private val tokenProvider: () -> String? = { null }
+    private val tokenProvider: () -> String? = { null },
+    private val spaceProvider: () -> Long? = { null }
 ) {
 
     private val httpClient = HttpClient {
@@ -114,6 +117,7 @@ class ApiClient(
         pageSize: Int = 20
     ): Result<ProductListResponse> = handleRequest {
         httpClient.get("/api/products") {
+            applySpaceId()
             parameter("categoryId", categoryId)
             parameter("status", status?.name)
             parameter("condition", condition?.name)
@@ -130,22 +134,29 @@ class ApiClient(
     }
 
     suspend fun getMyProducts(): Result<List<ProductResponse>> = handleRequest {
-        httpClient.get("/api/products/my").body()
+        httpClient.get("/api/products/my") {
+            applySpaceId()
+        }.body()
     }
 
     suspend fun getFavoriteProducts(page: Int = 1, pageSize: Int = 20): Result<ProductListResponse> = handleRequest {
         httpClient.get("/api/products/favorites") {
+            applySpaceId()
             parameter("page", page)
             parameter("pageSize", pageSize)
         }.body()
     }
 
     suspend fun addToFavorites(productId: Long): Result<SuccessResponse> = handleRequest {
-        httpClient.post("/api/products/$productId/favorite").body()
+        httpClient.post("/api/products/$productId/favorite") {
+            applySpaceId()
+        }.body()
     }
 
     suspend fun removeFromFavorites(productId: Long): Result<SuccessResponse> = handleRequest {
-        httpClient.delete("/api/products/$productId/favorite").body()
+        httpClient.delete("/api/products/$productId/favorite") {
+            applySpaceId()
+        }.body()
     }
 
     // ==================== SERVICES ====================
@@ -158,6 +169,7 @@ class ApiClient(
         pageSize: Int = 20
     ): Result<ServiceListResponse> = handleRequest {
         httpClient.get("/api/services") {
+            applySpaceId()
             parameter("categoryId", categoryId)
             parameter("status", status?.name)
             parameter("search", search)
@@ -171,41 +183,87 @@ class ApiClient(
     }
 
     suspend fun getMyServices(): Result<List<ServiceResponse>> = handleRequest {
-        httpClient.get("/api/services/my").body()
+        httpClient.get("/api/services/my") {
+            applySpaceId()
+        }.body()
     }
 
     suspend fun createService(request: CreateServiceRequest): Result<ServiceResponse> = handleRequest {
         httpClient.post("/api/services") {
+            applySpaceId()
             setBody(request)
         }.body()
     }
 
     suspend fun updateService(serviceId: Long, request: UpdateServiceRequest): Result<ServiceResponse> = handleRequest {
         httpClient.put("/api/services/$serviceId") {
+            applySpaceId()
             setBody(request)
         }.body()
     }
 
     suspend fun deleteService(serviceId: Long): Result<SuccessResponse> = handleRequest {
-        httpClient.delete("/api/services/$serviceId").body()
+        httpClient.delete("/api/services/$serviceId") {
+            applySpaceId()
+        }.body()
     }
 
     // ==================== PRODUCTS CREATE/UPDATE/DELETE ====================
 
     suspend fun createProduct(request: CreateProductRequest): Result<ProductResponse> = handleRequest {
         httpClient.post("/api/products") {
+            applySpaceId()
             setBody(request)
         }.body()
     }
 
     suspend fun updateProduct(productId: Long, request: UpdateProductRequest): Result<ProductResponse> = handleRequest {
         httpClient.put("/api/products/$productId") {
+            applySpaceId()
             setBody(request)
         }.body()
     }
 
     suspend fun deleteProduct(productId: Long): Result<SuccessResponse> = handleRequest {
-        httpClient.delete("/api/products/$productId").body()
+        httpClient.delete("/api/products/$productId") {
+            applySpaceId()
+        }.body()
+    }
+
+    // ==================== SPACES ====================
+
+    suspend fun getSpaces(
+        type: SpaceType? = null,
+        search: String? = null,
+        page: Int = 1,
+        pageSize: Int = 20
+    ): Result<SpaceListResponse> = handleRequest {
+        httpClient.get("/api/spaces") {
+            parameter("type", type?.name)
+            parameter("search", search)
+            parameter("page", page)
+            parameter("pageSize", pageSize)
+        }.body()
+    }
+
+    suspend fun getSpace(spaceId: Long): Result<SpaceResponse> = handleRequest {
+        httpClient.get("/api/spaces/$spaceId").body()
+    }
+
+    suspend fun createSpace(request: CreateSpaceRequest): Result<SpaceResponse> = handleRequest {
+        httpClient.post("/api/spaces") {
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun joinSpace(spaceId: Long, request: JoinSpaceRequest): Result<SpaceResponse> = handleRequest {
+        httpClient.post("/api/spaces/$spaceId/join") {
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun getSpaceMembers(spaceId: Long): Result<List<SpaceMemberResponse>> = handleRequest {
+        httpClient.get("/api/spaces/$spaceId/members").body()
     }
 
     // ==================== FILE UPLOAD ====================
@@ -271,6 +329,10 @@ class ApiClient(
 
     // ==================== ERROR HANDLING ====================
 
+    private fun HttpRequestBuilder.applySpaceId() {
+        spaceProvider()?.let { parameter("spaceId", it) }
+    }
+
     private suspend fun <T> handleRequest(block: suspend () -> T): Result<T> {
         return try {
             Result.success(block())
@@ -279,14 +341,13 @@ class ApiClient(
             println("❌ ClientRequestException: ${e.response.status}")
             println("   URL: ${e.response.call.request.url}")
             println("   Headers: ${e.response.call.request.headers.entries()}")
-            try {
-                val errorResponse: ErrorResponse = e.response.body()
-                println("   Error body: $errorResponse")
-                Result.failure(Exception(errorResponse.message))
-            } catch (parseError: Exception) {
-                println("   Failed to parse error body: ${parseError.message}")
-                Result.failure(Exception("Ошибка клиента: ${e.response.status.description}"))
+            val bodyText = runCatching { e.response.bodyAsText() }.getOrNull().orEmpty()
+            val message = runCatching {
+                Json.decodeFromString<ErrorResponse>(bodyText).message
+            }.getOrElse {
+                if (bodyText.isNotBlank()) bodyText else "Ошибка клиента: ${e.response.status.description}"
             }
+            Result.failure(Exception(message))
         } catch (e: ServerResponseException) {
             // 5xx errors
             println("❌ ServerResponseException: ${e.response.status}")

@@ -1,7 +1,6 @@
 package info.javaway.sc.shared.presentation.screens.profile
 
 import com.arkivanov.decompose.ComponentContext
-import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.domain.models.User
 import info.javaway.sc.shared.domain.repository.AuthRepository
 import info.javaway.sc.shared.presentation.core.BaseComponent
@@ -20,8 +19,7 @@ interface ProfileComponent {
 
 class DefaultProfileComponent(
     componentContext: ComponentContext,
-    private val authRepository: AuthRepository,
-    private val tokenManager: TokenManager
+    private val authRepository: AuthRepository
 ) : BaseComponent(componentContext), ProfileComponent {
 
     private val _state = MutableStateFlow<ProfileState>(ProfileState.Loading)
@@ -51,7 +49,9 @@ class DefaultProfileComponent(
 
     override fun logout() {
         Napier.d("Logging out user", tag = "ProfileComponent")
-        tokenManager.clear()
+        componentScope.launch {
+            authRepository.logout()
+        }
     }
 }
 

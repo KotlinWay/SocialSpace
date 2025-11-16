@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import info.javaway.sc.api.models.CreateProductRequest
 import info.javaway.sc.api.models.ProductCondition
 import info.javaway.sc.shared.data.api.ApiClient
+import info.javaway.sc.shared.data.local.SpaceManager
 import info.javaway.sc.shared.domain.models.Category
 import info.javaway.sc.shared.domain.repository.CategoryRepository
 import info.javaway.sc.shared.presentation.core.BaseComponent
@@ -33,7 +34,8 @@ interface CreateProductComponent {
 class DefaultCreateProductComponent(
     componentContext: ComponentContext,
     private val apiClient: ApiClient,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val spaceManager: SpaceManager
 ) : BaseComponent(componentContext), CreateProductComponent {
 
     private val _state = MutableStateFlow<CreateProductState>(CreateProductState.Loading)
@@ -108,6 +110,12 @@ class DefaultCreateProductComponent(
         componentScope.launch {
             _state.value = CreateProductState.Creating
             try {
+                val spaceId = spaceManager.getCurrentSpaceId()
+                if (spaceId == null) {
+                    _state.value = CreateProductState.Error("Сначала выберите пространство")
+                    return@launch
+                }
+
                 val form = _formState.value
 
                 Napier.d("CreateProductComponent: Uploading ${form.selectedImages.size} images...")
@@ -126,7 +134,8 @@ class DefaultCreateProductComponent(
                         price = form.price.toDouble(),
                         categoryId = form.category!!.id,
                         condition = form.condition,
-                        images = imageUrls
+                        images = imageUrls,
+                        spaceId = spaceId
                     )
 
                     val createResult = apiClient.createProduct(request)

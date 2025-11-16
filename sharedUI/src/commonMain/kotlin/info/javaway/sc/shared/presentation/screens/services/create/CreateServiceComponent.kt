@@ -3,6 +3,7 @@ package info.javaway.sc.shared.presentation.screens.services.create
 import com.arkivanov.decompose.ComponentContext
 import info.javaway.sc.api.models.CreateServiceRequest
 import info.javaway.sc.shared.data.api.ApiClient
+import info.javaway.sc.shared.data.local.SpaceManager
 import info.javaway.sc.shared.domain.models.Category
 import info.javaway.sc.shared.domain.repository.CategoryRepository
 import info.javaway.sc.shared.presentation.core.BaseComponent
@@ -32,7 +33,8 @@ interface CreateServiceComponent {
 class DefaultCreateServiceComponent(
     componentContext: ComponentContext,
     private val apiClient: ApiClient,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val spaceManager: SpaceManager
 ) : BaseComponent(componentContext), CreateServiceComponent {
 
     private val _state = MutableStateFlow<CreateServiceState>(CreateServiceState.Loading)
@@ -111,6 +113,12 @@ class DefaultCreateServiceComponent(
         componentScope.launch {
             _state.value = CreateServiceState.Creating
             try {
+                val spaceId = spaceManager.getCurrentSpaceId()
+                if (spaceId == null) {
+                    _state.value = CreateServiceState.Error("Сначала выберите пространство")
+                    return@launch
+                }
+
                 val form = _formState.value
 
                 Napier.d("CreateServiceComponent: Uploading ${form.selectedImages.size} images...")
@@ -128,7 +136,8 @@ class DefaultCreateServiceComponent(
                         description = form.description,
                         price = if (form.isNegotiable) null else form.price.ifBlank { null },
                         categoryId = form.category!!.id,
-                        images = imageUrls
+                        images = imageUrls,
+                        spaceId = spaceId
                     )
 
                     val createResult = apiClient.createService(request)

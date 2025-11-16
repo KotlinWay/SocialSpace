@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun LoginScreen(
     component: LoginComponent,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (Long?) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
     val state by component.state.collectAsState()
@@ -45,8 +45,9 @@ fun LoginScreen(
     val password by component.password.collectAsState()
 
     LaunchedEffect(state) {
-        if (state is LoginState.Success) {
-            onLoginSuccess()
+        var currentState = state
+        if (currentState is LoginState.Success) {
+            onLoginSuccess(currentState.defaultSpaceId)
         }
     }
 

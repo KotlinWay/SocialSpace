@@ -6,6 +6,7 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import info.javaway.sc.shared.presentation.screens.auth.LoginScreen
 import info.javaway.sc.shared.presentation.screens.auth.RegisterScreen
+import info.javaway.sc.shared.presentation.screens.spaces.SpaceSelectionScreen
 
 /**
  * Composable для отображения навигации между экранами
@@ -29,6 +30,10 @@ fun RootContent(component: RootComponent) {
             )
             is RootComponent.Child.Main -> MainContent(
                 component = child.component
+            )
+            is RootComponent.Child.SpaceSelection -> SpaceSelectionScreen(
+                component = child.component,
+                onSpaceSelected = child.onSpaceSelected
             )
         }
     }

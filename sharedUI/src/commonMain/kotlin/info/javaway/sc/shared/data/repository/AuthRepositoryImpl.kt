@@ -1,6 +1,7 @@
 package info.javaway.sc.shared.data.repository
 
 import info.javaway.sc.shared.data.api.ApiClient
+import info.javaway.sc.shared.data.local.SpaceManager
 import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.data.mappers.toDomain
 import info.javaway.sc.shared.domain.models.AuthResponse
@@ -15,7 +16,8 @@ import info.javaway.sc.api.models.LoginRequest as ApiLoginRequest
  */
 class AuthRepositoryImpl(
     private val apiClient: ApiClient,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val spaceManager: SpaceManager
 ) : AuthRepository {
 
     override suspend fun register(
@@ -35,6 +37,7 @@ class AuthRepositoryImpl(
             onSuccess = { authResponse ->
                 tokenManager.saveToken(authResponse.token)
                 tokenManager.saveUserId(authResponse.user.id)
+                handleSpaceSelection(authResponse.user.defaultSpaceId)
                 kotlin.Result.success(authResponse.toDomain())
             },
             onFailure = { exception ->
@@ -50,6 +53,7 @@ class AuthRepositoryImpl(
             onSuccess = { authResponse ->
                 tokenManager.saveToken(authResponse.token)
                 tokenManager.saveUserId(authResponse.user.id)
+                handleSpaceSelection(authResponse.user.defaultSpaceId)
                 kotlin.Result.success(authResponse.toDomain())
             },
             onFailure = { exception ->
@@ -71,6 +75,7 @@ class AuthRepositoryImpl(
 
     override suspend fun logout() {
         tokenManager.clear()
+        spaceManager.clearSpace()
     }
 
     override fun isLoggedIn(): Boolean {
@@ -83,5 +88,12 @@ class AuthRepositoryImpl(
 
     override fun getUserId(): Long? {
         return tokenManager.getUserId()
+    }
+    private fun handleSpaceSelection(defaultSpaceId: Long?) {
+        if (defaultSpaceId != null) {
+            spaceManager.selectSpace(defaultSpaceId)
+        } else {
+            spaceManager.clearSpace()
+        }
     }
 }

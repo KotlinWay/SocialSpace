@@ -4,6 +4,7 @@
 # Использование: ./add_test_data.sh
 
 API_URL="http://localhost:8080"
+DEFAULT_SPACE_ID=1
 
 echo "🚀 Добавление тестовых данных в SocialSpace..."
 echo ""
@@ -65,8 +66,13 @@ if [ -z "$USER1_TOKEN" ]; then
     exit 1
 fi
 
-echo "✅ Пользователь 1 зарегистрирован. Token: ${USER1_TOKEN:0:20}..."
-echo "   Полный токен: $USER1_TOKEN"
+JOIN1_RESPONSE=$(curl -s -X POST "$API_URL/api/spaces/$DEFAULT_SPACE_ID/join" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $USER1_TOKEN" \
+  -d '{}')
+
+echo "   Присоединение пользователя 1 к пространству $DEFAULT_SPACE_ID: $JOIN1_RESPONSE"
+echo "✅ Пользователь 1 зарегистрирован и добавлен в space $DEFAULT_SPACE_ID."
 echo ""
 
 # 2. Регистрация тестового пользователя 2
@@ -100,8 +106,13 @@ if [ -z "$USER2_TOKEN" ]; then
     exit 1
 fi
 
-echo "✅ Пользователь 2 зарегистрирован. Token: ${USER2_TOKEN:0:20}..."
-echo "   Полный токен: $USER2_TOKEN"
+JOIN2_RESPONSE=$(curl -s -X POST "$API_URL/api/spaces/$DEFAULT_SPACE_ID/join" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $USER2_TOKEN" \
+  -d '{}')
+
+echo "   Присоединение пользователя 2 к пространству $DEFAULT_SPACE_ID: $JOIN2_RESPONSE"
+echo "✅ Пользователь 2 зарегистрирован и добавлен в space $DEFAULT_SPACE_ID."
 echo ""
 
 # 3. Создание товаров для пользователя 1
@@ -119,7 +130,8 @@ PRODUCT1_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
     "price": 15000,
     "categoryId": 1,
     "condition": "USED",
-    "images": ["https://via.placeholder.com/400x300?text=Диван"]
+    "images": ["https://via.placeholder.com/400x300?text=Диван"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$PRODUCT1_RESPONSE" "создании товара 1"; then
@@ -139,7 +151,8 @@ PRODUCT2_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
     "price": 55000,
     "categoryId": 2,
     "condition": "USED",
-    "images": ["https://via.placeholder.com/400x300?text=Ноутбук"]
+    "images": ["https://via.placeholder.com/400x300?text=Ноутбук"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$PRODUCT2_RESPONSE" "создании товара 2"; then
@@ -159,7 +172,8 @@ PRODUCT3_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
     "price": 20000,
     "categoryId": 7,
     "condition": "USED",
-    "images": ["https://via.placeholder.com/400x300?text=Велосипед"]
+    "images": ["https://via.placeholder.com/400x300?text=Велосипед"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$PRODUCT3_RESPONSE" "создании товара 3"; then
@@ -184,7 +198,8 @@ PRODUCT4_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
     "price": 25000,
     "categoryId": 5,
     "condition": "USED",
-    "images": ["https://via.placeholder.com/400x300?text=Холодильник"]
+    "images": ["https://via.placeholder.com/400x300?text=Холодильник"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$PRODUCT4_RESPONSE" "создании товара 4"; then
@@ -204,7 +219,8 @@ PRODUCT5_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
     "price": 12000,
     "categoryId": 3,
     "condition": "USED",
-    "images": ["https://via.placeholder.com/400x300?text=Коляска"]
+    "images": ["https://via.placeholder.com/400x300?text=Коляска"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$PRODUCT5_RESPONSE" "создании товара 5"; then
@@ -224,7 +240,8 @@ PRODUCT6_RESPONSE=$(curl -s -X POST "$API_URL/api/products" \
     "price": 45000,
     "categoryId": 2,
     "condition": "USED",
-    "images": ["https://via.placeholder.com/400x300?text=iPhone"]
+    "images": ["https://via.placeholder.com/400x300?text=iPhone"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$PRODUCT6_RESPONSE" "создании товара 6"; then
@@ -248,7 +265,8 @@ SERVICE1_RESPONSE=$(curl -s -X POST "$API_URL/api/services" \
     "description": "Качественный ремонт квартир любой сложности. Все виды работ: штукатурка, шпаклевка, покраска, обои, полы, потолки. Опыт 10 лет. Гарантия на работы.",
     "price": "50000",
     "categoryId": 16,
-    "images": ["https://via.placeholder.com/400x300?text=Ремонт"]
+    "images": ["https://via.placeholder.com/400x300?text=Ремонт"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$SERVICE1_RESPONSE" "создании услуги 1"; then
@@ -267,7 +285,8 @@ SERVICE2_RESPONSE=$(curl -s -X POST "$API_URL/api/services" \
     "description": "Помогу подготовиться к ОГЭ/ЕГЭ по математике. Опыт преподавания 5 лет. Индивидуальный подход к каждому ученику.",
     "price": "1000",
     "categoryId": 18,
-    "images": ["https://via.placeholder.com/400x300?text=Репетитор"]
+    "images": ["https://via.placeholder.com/400x300?text=Репетитор"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$SERVICE2_RESPONSE" "создании услуги 2"; then
@@ -286,7 +305,8 @@ SERVICE3_RESPONSE=$(curl -s -X POST "$API_URL/api/services" \
     "description": "Установка Windows, настройка компьютера, удаление вирусов, восстановление данных. Быстро и качественно.",
     "price": null,
     "categoryId": 22,
-    "images": ["https://via.placeholder.com/400x300?text=Компьютеры"]
+    "images": ["https://via.placeholder.com/400x300?text=Компьютеры"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$SERVICE3_RESPONSE" "создании услуги 3"; then
@@ -310,7 +330,8 @@ SERVICE4_RESPONSE=$(curl -s -X POST "$API_URL/api/services" \
     "description": "Профессиональная уборка квартир, домов, офисов. Генеральная уборка, поддерживающая уборка. Все средства свои. Качество гарантирую!",
     "price": null,
     "categoryId": 17,
-    "images": ["https://via.placeholder.com/400x300?text=Уборка"]
+    "images": ["https://via.placeholder.com/400x300?text=Уборка"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$SERVICE4_RESPONSE" "создании услуги 4"; then
@@ -329,7 +350,8 @@ SERVICE5_RESPONSE=$(curl -s -X POST "$API_URL/api/services" \
     "description": "Женские и мужские стрижки любой сложности. Окрашивание, укладки. Выезд на дом. Все инструменты и материалы свои.",
     "price": "1500",
     "categoryId": 19,
-    "images": ["https://via.placeholder.com/400x300?text=Парикмахер"]
+    "images": ["https://via.placeholder.com/400x300?text=Парикмахер"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$SERVICE5_RESPONSE" "создании услуги 5"; then
@@ -348,7 +370,8 @@ SERVICE6_RESPONSE=$(curl -s -X POST "$API_URL/api/services" \
     "description": "Профессиональная фотосъемка свадеб, дней рождения, корпоративов. Обработка фото в подарок. Портфолио по запросу.",
     "price": "5000",
     "categoryId": 24,
-    "images": ["https://via.placeholder.com/400x300?text=Фото"]
+    "images": ["https://via.placeholder.com/400x300?text=Фото"],
+    "spaceId": '"$DEFAULT_SPACE_ID"'
   }')
 
 if check_response "$SERVICE6_RESPONSE" "создании услуги 6"; then

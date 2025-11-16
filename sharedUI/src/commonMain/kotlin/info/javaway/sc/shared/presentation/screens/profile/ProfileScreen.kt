@@ -53,6 +53,7 @@ fun ProfileScreen(
     onLogout: () -> Unit,
     onMyProductsClick: () -> Unit,
     onMyServicesClick: () -> Unit,
+    onSwitchSpace: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by component.state.collectAsState()
@@ -79,15 +80,16 @@ fun ProfileScreen(
                     LoadingContent()
                 }
                 is ProfileState.Success -> {
-                        ProfileContent(
-                            user = state.user,
-                            onLogout = {
-                                component.logout()
-                                onLogout()
-                            },
-                            onMyProductsClick = onMyProductsClick,
-                            onMyServicesClick = onMyServicesClick
-                        )
+                    ProfileContent(
+                        user = state.user,
+                        onLogout = {
+                            component.logout()
+                            onLogout()
+                        },
+                        onMyProductsClick = onMyProductsClick,
+                        onMyServicesClick = onMyServicesClick,
+                        onSwitchSpace = onSwitchSpace
+                    )
                 }
                 is ProfileState.Error -> {
                         ErrorContent(
@@ -109,6 +111,7 @@ private fun ProfileContent(
     onLogout: () -> Unit,
     onMyProductsClick: () -> Unit,
     onMyServicesClick: () -> Unit,
+    onSwitchSpace: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -243,6 +246,15 @@ private fun ProfileContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Выйти")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedButton(
+            onClick = onSwitchSpace,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Сменить пространство")
         }
     }
 }

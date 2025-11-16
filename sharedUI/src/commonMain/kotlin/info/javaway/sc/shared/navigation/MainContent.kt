@@ -139,7 +139,8 @@ fun MainContent(
                             component = child.component,
                             onLogout = child.onLogout,
                             onMyProductsClick = child.onMyProductsClick,
-                            onMyServicesClick = child.onMyServicesClick
+                            onMyServicesClick = child.onMyServicesClick,
+                            onSwitchSpace = child.onSwitchSpace
                         )
                     }
                     is MainComponent.Child.MyProducts -> {

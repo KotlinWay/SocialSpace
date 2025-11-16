@@ -8,12 +8,16 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.router.stack.replaceCurrent
 import com.arkivanov.decompose.value.Value
+import info.javaway.sc.shared.data.local.SpaceManager
 import info.javaway.sc.shared.data.local.TokenManager
 import info.javaway.sc.shared.domain.repository.AuthRepository
+import info.javaway.sc.shared.domain.repository.SpaceRepository
 import info.javaway.sc.shared.presentation.screens.auth.DefaultLoginComponent
 import info.javaway.sc.shared.presentation.screens.auth.DefaultRegisterComponent
 import info.javaway.sc.shared.presentation.screens.auth.LoginComponent
 import info.javaway.sc.shared.presentation.screens.auth.RegisterComponent
+import info.javaway.sc.shared.presentation.screens.spaces.DefaultSpaceSelectionComponent
+import info.javaway.sc.shared.presentation.screens.spaces.SpaceSelectionComponent
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -27,6 +31,8 @@ class RootComponent(
 ) : ComponentContext by componentContext, KoinComponent {
 
     private val authRepository: AuthRepository by inject()
+    private val spaceRepository: SpaceRepository by inject()
+    private val spaceManager: SpaceManager by inject()
 
     private val navigation = StackNavigation<Config>()
 
@@ -34,10 +40,10 @@ class RootComponent(
         childStack(
             source = navigation,
             serializer = Config.serializer(),
-            initialConfiguration = if (tokenManager.getToken() != null) {
-                Config.Main
-            } else {
-                Config.Login
+            initialConfiguration = when {
+                tokenManager.getToken() == null -> Config.Login
+                spaceManager.hasSelectedSpace() -> Config.Main
+                else -> Config.SpaceSelection
             },
             handleBackButton = true,
             childFactory = ::child,
@@ -51,7 +57,15 @@ class RootComponent(
                     authRepository = authRepository
                 ),
                 onNavigateToRegister = { navigation.push(Config.Register) },
-                onLoginSuccess = { navigation.replaceCurrent(Config.Main) }
+                onLoginSuccess = { defaultSpaceId ->
+                    defaultSpaceId?.let { spaceManager.selectSpace(it) }
+                    val target = if (spaceManager.hasSelectedSpace()) {
+                        Config.Main
+                    } else {
+                        Config.SpaceSelection
+                    }
+                    navigation.replaceCurrent(target)
+                }
             )
             is Config.Register -> Child.Register(
                 component = DefaultRegisterComponent(
@@ -59,16 +73,34 @@ class RootComponent(
                     authRepository = authRepository
                 ),
                 onNavigateToLogin = { navigation.pop() },
-                onRegisterSuccess = { navigation.replaceCurrent(Config.Main) }
+                onRegisterSuccess = {
+                    spaceManager.clearSpace()
+                    navigation.replaceCurrent(Config.SpaceSelection)
+                }
             )
             is Config.Main -> Child.Main(
                 component = MainComponent(
                     componentContext = componentContext,
                     onLogout = {
                         tokenManager.clear()
+                        spaceManager.clearSpace()
                         navigation.replaceCurrent(Config.Login)
+                    },
+                    onSwitchSpace = {
+                        spaceManager.clearSpace()
+                        navigation.replaceCurrent(Config.SpaceSelection)
                     }
                 )
+            )
+            is Config.SpaceSelection -> Child.SpaceSelection(
+                component = DefaultSpaceSelectionComponent(
+                    componentContext = componentContext,
+                    spaceRepository = spaceRepository,
+                    spaceManager = spaceManager
+                ),
+                onSpaceSelected = {
+                    navigation.replaceCurrent(Config.Main)
+                }
             )
         }
 
@@ -76,7 +108,7 @@ class RootComponent(
         data class Login(
             val component: LoginComponent,
             val onNavigateToRegister: () -> Unit,
-            val onLoginSuccess: () -> Unit
+            val onLoginSuccess: (Long?) -> Unit
         ) : Child()
 
         data class Register(
@@ -87,6 +119,11 @@ class RootComponent(
 
         data class Main(
             val component: MainComponent
+        ) : Child()
+
+        data class SpaceSelection(
+            val component: SpaceSelectionComponent,
+            val onSpaceSelected: () -> Unit
         ) : Child()
     }
 
@@ -100,5 +137,8 @@ class RootComponent(
 
         @Serializable
         data object Main : Config
+
+        @Serializable
+        data object SpaceSelection : Config
     }
 }

@@ -63,7 +63,9 @@ class DefaultLoginComponent(
                 phone = _phone.value.trim(),
                 password = _password.value
             )
-                .onSuccess { _state.value = LoginState.Success }
+                .onSuccess { response ->
+                    _state.value = LoginState.Success(response.user.defaultSpaceId)
+                }
                 .onFailure { error ->
                     _state.value = LoginState.Error(error.message ?: "Неизвестная ошибка")
                 }
@@ -101,5 +103,5 @@ sealed interface LoginState {
     /**
      * Успешный вход
      */
-    data object Success : LoginState
+    data class Success(val defaultSpaceId: Long?) : LoginState
 }
