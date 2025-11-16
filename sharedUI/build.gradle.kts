@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.implementation
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
@@ -83,10 +85,14 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
 
             // Activity Compose для ImagePicker
-            implementation(libs.androidx.activityCompose)
+            api(libs.androidx.activityCompose)
 
             // Paging 3 Compose
             implementation(libs.paging.compose)
+
+
+            api(libs.koin.android)
+            api(libs.koin.compose)
         }
 
         iosMain.dependencies {

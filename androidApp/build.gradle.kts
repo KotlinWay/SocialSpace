@@ -31,6 +31,4 @@ kotlin {
 
 dependencies {
     implementation(project(":sharedUI"))
-    implementation(libs.androidx.activityCompose)
-    implementation(libs.koin.android)
 }
